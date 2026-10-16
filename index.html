@@ -1,0 +1,2450 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d6e4f">
+<title>TahfidzKu — Hafalan Al-Qur'an</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --bg:#f3f7f5; --card:#ffffff; --primary:#087653; --primary-dark:#064e38;
+    --primary-light:#e6f2ec; --accent:#d4a72c; --text:#1a2b22; --muted:#6b7a72;
+    --danger:#c0392b; --warning:#e67e22; --success:#27ae60; --border:#e2e8e4;
+    --shadow:0 8px 24px rgba(13,70,50,0.07);
+  }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:80px;
+    font-size:15px; line-height:1.5;
+  }
+  .header{
+    background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
+    color:white; padding:20px 20px 24px; position:sticky; top:0; z-index:50;
+    box-shadow:0 2px 16px rgba(13,110,79,0.25);
+  }
+  .header h1{ font-size:20px; font-weight:700; display:flex; align-items:center; gap:8px;}
+  .header .sub{ font-size:12px; opacity:0.85; margin-top:2px; letter-spacing:0.5px;}
+  .header .arabic{ font-family:'Traditional Arabic',serif; font-size:22px; opacity:0.9;}
+
+  .container{ padding:16px; max-width:640px; margin:0 auto;}
+  .view{ display:none; animation:fade .25s ease;}
+  .view.active{ display:block;}
+  @keyframes fade{ from{opacity:0; transform:translateY(6px);} to{opacity:1;transform:none;} }
+
+  .card{
+    background:var(--card); border-radius:20px; padding:18px; margin-bottom:14px;
+    box-shadow:var(--shadow); border:1px solid var(--border);
+  }
+  .card h3{ font-size:14px; color:var(--muted); font-weight:600; margin-bottom:10px;
+    text-transform:uppercase; letter-spacing:0.6px;}
+
+  .stat-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}
+  .stat{
+    background:var(--card); border-radius:14px; padding:14px; box-shadow:var(--shadow);
+    border:1px solid var(--border); text-align:center;
+  }
+  .stat .num{ font-size:24px; font-weight:800; color:var(--primary);}
+  .stat .lbl{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-top:2px;}
+
+  .progress-bar{
+    height:10px; background:var(--primary-light); border-radius:5px; overflow:hidden; margin-top:8px;
+  }
+  .progress-bar > div{ height:100%; background:linear-gradient(90deg,var(--primary),var(--accent));
+    border-radius:5px; transition:width .4s ease;}
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    background:var(--primary); color:white; border:none; padding:12px 18px;
+    border-radius:14px; font-size:14px; font-weight:650; cursor:pointer;
+    transition:transform .1s, background .2s; width:100%;
+  }
+  .btn:active{ transform:scale(0.97);}
+  .btn.secondary{ background:var(--primary-light); color:var(--primary);}
+  .btn.ghost{ background:transparent; color:var(--primary); border:1.5px solid var(--primary);}
+  .btn.danger{ background:var(--danger);}
+  .btn.small{ padding:8px 12px; font-size:13px; width:auto;}
+  .btn-row{ display:flex; gap:8px; margin-top:10px;}
+
+  .bottom-nav{
+    position:fixed; bottom:0; left:0; right:0; background:white;
+    display:flex; justify-content:space-around; padding:8px 0 12px;
+    border-top:1px solid var(--border); z-index:100;
+    box-shadow:0 -4px 20px rgba(0,0,0,0.05);
+  }
+  .nav-item{
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    padding:6px 12px; cursor:pointer; color:var(--muted); font-size:10px;
+    font-weight:600; transition:color .2s; border-radius:10px; min-width:60px;
+  }
+  .nav-item .icon{ font-size:20px; line-height:1;}
+  .nav-item.active{ color:var(--primary); background:var(--primary-light);}
+
+  .surah-list{ display:flex; flex-direction:column; gap:8px;}
+  .surah-item{
+    background:var(--card); border-radius:12px; padding:12px 14px;
+    display:flex; align-items:center; gap:12px; cursor:pointer;
+    border:1px solid var(--border); transition:all .15s;
+  }
+  .surah-item:active{ background:var(--primary-light);}
+  .surah-num{
+    width:38px; height:38px; border-radius:10px; background:var(--primary-light);
+    color:var(--primary); display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:13px; flex-shrink:0;
+  }
+  .surah-info{ flex:1; min-width:0;}
+  .surah-info .name{ font-weight:600; font-size:14px;}
+  .surah-info .meta{ font-size:11px; color:var(--muted); margin-top:1px;}
+  .surah-progress{ font-size:11px; font-weight:700; color:var(--primary); text-align:right;}
+  .surah-item.done{ background:linear-gradient(90deg,#e6f2ec,#f5f7f5);}
+
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200;
+    display:none; align-items:flex-end; justify-content:center;
+    animation:overlayIn .2s;
+  }
+  .modal-overlay.active{ display:flex;}
+  @keyframes overlayIn{ from{opacity:0;} to{opacity:1;} }
+  .modal{
+    background:white; width:100%; max-width:640px; border-radius:20px 20px 0 0;
+    padding:20px; max-height:92vh; overflow-y:auto;
+    animation:slideUp .3s ease; position:relative;
+  }
+  @keyframes slideUp{ from{transform:translateY(100%);} to{transform:none;} }
+  .modal h2{ font-size:18px; margin-bottom:4px;}
+  .modal .sub{ font-size:12px; color:var(--muted); margin-bottom:16px;}
+  .modal-close{
+    position:absolute; top:14px; right:14px; background:var(--bg); border:none;
+    width:32px; height:32px; border-radius:50%; font-size:18px; cursor:pointer;
+    color:var(--muted); z-index:10;
+  }
+
+  .ayah-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin:12px 0;}
+  .ayah-cell{
+    aspect-ratio:1; background:var(--bg); border-radius:8px; display:flex;
+    align-items:center; justify-content:center; font-size:12px; font-weight:600;
+    color:var(--muted); cursor:pointer; border:1.5px solid transparent;
+    transition:all .1s; user-select:none;
+  }
+  .ayah-cell.on{ background:var(--primary); color:white; border-color:var(--primary-dark);}
+  .ayah-cell:active{ transform:scale(0.92);}
+
+  .mushaf-toolbar{
+    display:flex; gap:6px; margin-bottom:14px; position:sticky; top:0;
+    background:white; padding:8px 0; z-index:5; border-bottom:1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .mushaf-toolbar button{
+    flex:1; min-width:80px; padding:8px; font-size:12px; background:var(--bg); border:none;
+    border-radius:8px; font-weight:600; color:var(--primary); cursor:pointer;
+  }
+  .mushaf-toolbar button.active{ background:var(--primary); color:white;}
+  .mushaf-ayah{
+    padding:16px 14px; border-radius:12px; margin-bottom:10px;
+    background:var(--bg); border:1.5px solid var(--border); transition:all .2s;
+    position:relative;
+  }
+  .mushaf-ayah.mem{ background:var(--primary-light); border-color:var(--primary);}
+  .mushaf-ayah.playing{ background:#fff8e6; border-color:var(--accent); box-shadow:0 0 0 3px rgba(212,167,44,0.15);}
+  .mushaf-arabic{
+    font-family:'Traditional Arabic','Amiri','Scheherazade',serif;
+    font-size:26px; line-height:2; text-align:right; direction:rtl;
+    color:var(--text); margin-bottom:10px;
+  }
+  .mushaf-actions{
+    display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;
+  }
+  .mushaf-actions button{
+    padding:6px 12px; font-size:11px; font-weight:700; border-radius:8px;
+    border:none; cursor:pointer; background:white; color:var(--primary);
+    border:1.5px solid var(--primary-light);
+  }
+  .mushaf-actions button.primary{ background:var(--primary); color:white; border-color:var(--primary);}
+  .mushaf-actions button.playing{ background:var(--accent); color:white; border-color:var(--accent);}
+  .ayah-num-badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:26px; height:26px; border-radius:50%; background:var(--accent); color:white;
+    font-size:11px; font-weight:700; margin-left:8px;
+  }
+  .loading{
+    text-align:center; padding:30px; color:var(--muted); font-size:13px;
+  }
+  .loading .spin{
+    width:32px; height:32px; border:3px solid var(--primary-light);
+    border-top-color:var(--primary); border-radius:50%; margin:0 auto 12px;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+
+  .form-group{ margin-bottom:14px;}
+  .form-group label{ display:block; font-size:12px; font-weight:600; color:var(--muted);
+    margin-bottom:6px; text-transform:uppercase; letter-spacing:0.4px;}
+  .form-group input, .form-group select, .form-group textarea{
+    width:100%; padding:12px; border-radius:10px; border:1.5px solid var(--border);
+    font-size:14px; font-family:inherit; background:white; color:var(--text);
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus{
+    outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-light);
+  }
+  .form-group textarea{ resize:vertical; min-height:70px;}
+  .form-group .hint{ font-size:11px; color:var(--muted); margin-top:4px;}
+
+  .murajaah-card{
+    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+    color:white; border-radius:18px; padding:22px; text-align:center;
+    box-shadow:0 4px 20px rgba(13,110,79,0.3);
+  }
+  .murajaah-card .surah-name{ font-size:24px; font-weight:800; margin-bottom:4px;}
+  .murajaah-card .surah-meta{ font-size:13px; opacity:0.85; margin-bottom:20px;}
+  .murajaah-card .arabic{ font-family:'Traditional Arabic',serif; font-size:36px; opacity:0.35;
+    margin-bottom:8px; }
+  .grade-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:16px;}
+  .grade-btn{
+    background:rgba(255,255,255,0.15); border:1.5px solid rgba(255,255,255,0.3);
+    color:white; padding:14px 8px; border-radius:12px; cursor:pointer;
+    font-size:12px; font-weight:600; transition:all .15s;
+  }
+  .grade-btn:active{ transform:scale(0.95); background:rgba(255,255,255,0.3);}
+  .grade-btn .em{ font-size:20px; display:block; margin-bottom:4px;}
+
+  .empty{ text-align:center; padding:40px 20px; color:var(--muted);}
+  .empty .em{ font-size:48px; margin-bottom:12px; opacity:0.5;}
+  .empty p{ font-size:14px;}
+
+  .setoran-item{
+    background:var(--card); border-radius:12px; padding:12px 14px; margin-bottom:8px;
+    border:1px solid var(--border); display:flex; align-items:center; gap:12px;
+  }
+  .setoran-item .badge{
+    width:42px; height:42px; border-radius:10px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; font-size:9px; font-weight:700;
+    flex-shrink:0; line-height:1;
+  }
+  .badge.lancar{ background:#e6f7ee; color:var(--success);}
+  .badge.sulit{ background:#fdf1e0; color:var(--warning);}
+  .badge.lupa{ background:#fbeae8; color:var(--danger);}
+  .badge .big{ font-size:16px; margin-bottom:1px;}
+  .setoran-info{ flex:1; min-width:0;}
+  .setoran-info .title{ font-weight:600; font-size:14px;}
+  .setoran-info .meta{ font-size:11px; color:var(--muted); margin-top:2px;}
+  .setoran-info .note{ font-size:12px; color:var(--muted); margin-top:4px; font-style:italic;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+  .chart{ display:flex; align-items:flex-end; gap:6px; height:120px; margin-top:10px; padding:0 4px;}
+  .chart .bar{
+    flex:1; background:linear-gradient(180deg,var(--primary),var(--primary-light));
+    border-radius:6px 6px 0 0; min-height:4px; position:relative;
+    transition:height .4s;
+  }
+  .chart .bar .val{
+    position:absolute; top:-18px; left:0; right:0; text-align:center;
+    font-size:10px; font-weight:700; color:var(--primary);
+  }
+  .chart-labels{ display:flex; gap:6px; padding:0 4px; margin-top:6px;}
+  .chart-labels span{ flex:1; text-align:center; font-size:10px; color:var(--muted);}
+
+  .toast{
+    position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--text); color:white; padding:12px 20px; border-radius:12px;
+    font-size:13px; font-weight:600; opacity:0; pointer-events:none; z-index:300;
+    transition:all .3s; box-shadow:0 4px 20px rgba(0,0,0,0.2); max-width:90%;
+    text-align:center;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0);}
+
+  .rec-btn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--bg); border:1.5px dashed var(--border); border-radius:12px;
+    padding:16px; cursor:pointer; color:var(--muted); font-weight:600; font-size:13px;
+    transition:all .2s;
+  }
+  .rec-btn.recording{ background:#fbeae8; border-color:var(--danger); color:var(--danger);
+    animation:pulse 1.5s infinite;}
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.6;} }
+
+  .filter-row{ display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; padding-bottom:4px;}
+  .filter-row::-webkit-scrollbar{ display:none;}
+  .chip{
+    padding:8px 14px; background:white; border:1.5px solid var(--border);
+    border-radius:20px; font-size:12px; font-weight:600; color:var(--muted);
+    cursor:pointer; white-space:nowrap;
+  }
+  .chip.active{ background:var(--primary); color:white; border-color:var(--primary);}
+
+  .streak-badge{
+    display:inline-flex; align-items:center; gap:6px;
+    background:linear-gradient(135deg,#d4a72c,#f39c12); color:white;
+    padding:6px 14px; border-radius:20px; font-weight:700; font-size:13px;
+    box-shadow:0 2px 8px rgba(212,167,44,0.3);
+  }
+
+  .target-ring-wrap{
+    display:flex; align-items:center; gap:16px; padding:14px;
+    background:linear-gradient(135deg,#e6f2ec,#ffffff); border-radius:14px;
+    border:1px solid var(--border);
+  }
+  .ring{ width:78px; height:78px; flex-shrink:0; position:relative;}
+  .ring svg{ transform:rotate(-90deg);}
+  .ring .ring-bg{ fill:none; stroke:var(--primary-light); stroke-width:8;}
+  .ring .ring-fg{ fill:none; stroke:var(--primary); stroke-width:8; stroke-linecap:round;
+    transition:stroke-dashoffset .5s ease;}
+  .ring .ring-text{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; font-weight:800; font-size:16px;
+    color:var(--primary); line-height:1;
+  }
+  .ring .ring-text small{ font-size:9px; font-weight:600; color:var(--muted); margin-top:2px;}
+  .target-info{ flex:1;}
+  .target-info .title{ font-weight:700; font-size:14px; color:var(--text);}
+  .target-info .desc{ font-size:12px; color:var(--muted); margin-top:2px;}
+
+  .notif-perm-banner{
+    background:#fff8e6; border:1px solid #f4d97a; border-radius:12px;
+    padding:12px; margin-bottom:12px; display:flex; align-items:center; gap:10px;
+    font-size:12px; color:#8a6d1a;
+  }
+  .notif-perm-banner button{
+    padding:6px 12px; font-size:11px; font-weight:700; border-radius:8px;
+    background:var(--accent); color:white; border:none; cursor:pointer;
+    white-space:nowrap;
+  }
+
+  /* Kalender heatmap */
+  .heatmap-wrap{ overflow-x:auto; padding-bottom:6px;}
+  .heatmap-wrap::-webkit-scrollbar{ height:4px;}
+  .heatmap-wrap::-webkit-scrollbar-thumb{ background:var(--border); border-radius:2px;}
+  .heatmap{
+    display:grid; grid-template-rows:repeat(7, 14px); grid-auto-flow:column;
+    grid-auto-columns:14px; gap:3px; padding:4px 0;
+  }
+  .heatmap .cell{
+    width:14px; height:14px; border-radius:3px; background:#ebedf0;
+    transition:transform .1s;
+  }
+  .heatmap .cell:active{ transform:scale(1.3);}
+  .heatmap .cell.l1{ background:#9be9a8;}
+  .heatmap .cell.l2{ background:#40c463;}
+  .heatmap .cell.l3{ background:#30a14e;}
+  .heatmap .cell.l4{ background:#216e39;}
+  .heatmap-legend{
+    display:flex; align-items:center; gap:6px; justify-content:flex-end;
+    font-size:10px; color:var(--muted); margin-top:8px;
+  }
+  .heatmap-legend .sq{ width:12px; height:12px; border-radius:3px;}
+
+  /* Waktu shalat */
+  .prayer-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px;
+  }
+  .prayer-item{
+    background:var(--bg); border-radius:10px; padding:10px 8px; text-align:center;
+    border:1px solid var(--border);
+  }
+  .prayer-item.next{ background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+    color:white; border-color:var(--primary-dark);}
+  .prayer-item .name{ font-size:10px; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.5px; opacity:0.75;}
+  .prayer-item .time{ font-size:16px; font-weight:800; margin-top:2px;}
+  .prayer-item.next .name{ opacity:0.9;}
+
+  /* Qari */
+  .qari-option{
+    display:flex; align-items:center; gap:12px; padding:12px 14px;
+    background:var(--bg); border-radius:12px; margin-bottom:8px; cursor:pointer;
+    border:1.5px solid transparent; transition:all .15s;
+  }
+  .qari-option.active{ border-color:var(--primary); background:var(--primary-light);}
+  .qari-option .q-icon{
+    width:40px; height:40px; border-radius:10px; background:white;
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+    flex-shrink:0;
+  }
+  .qari-option.active .q-icon{ background:var(--primary); color:white;}
+  .qari-option .q-info{ flex:1;}
+  .qari-option .q-name{ font-weight:700; font-size:14px;}
+  .qari-option .q-style{ font-size:11px; color:var(--muted); margin-top:1px;}
+  .qari-option.active .q-style{ color:var(--primary);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📖 SanadKu <span class="arabic">﷽</span></h1>
+  <div class="sub">Halaqah • Hafalan • Murajaah • Progres Bersama</div>
+</div>
+
+<div class="container">
+
+  <!-- BERANDA -->
+  <div class="view active" id="view-home">
+    <div class="card" style="background:linear-gradient(135deg,#e6f2ec,#ffffff);">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div id="home-salam" style="font-size:13px; color:var(--muted); font-weight:600;">Assalamu'alaikum 👋</div>
+          <div id="home-greeting" style="font-size:20px; font-weight:800; margin-top:2px;">Semangat menghafal!</div>
+        </div>
+        <div class="streak-badge"><span>🔥</span><span id="home-streak">0</span></div>
+      </div>
+      <div style="margin-top:14px;">
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--muted); font-weight:600;">
+          <span>Progress Hafalan</span>
+          <span id="home-progress-pct">0%</span>
+        </div>
+        <div class="progress-bar"><div id="home-progress-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div id="notif-banner-wrap"></div>
+
+    <!-- Waktu Shalat -->
+    <div class="card" id="prayer-card">
+      <h3 style="display:flex; justify-content:space-between; align-items:center;">
+        <span>🕌 Waktu Shalat</span>
+        <span style="font-size:11px; text-transform:none; letter-spacing:0;" id="prayer-loc"></span>
+      </h3>
+      <div id="prayer-content">
+        <div style="font-size:12px; color:var(--muted);">Memuat waktu shalat...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🎯 Target Hari Ini</h3>
+      <div class="target-ring-wrap">
+        <div class="ring">
+          <svg width="78" height="78">
+            <circle class="ring-bg" cx="39" cy="39" r="34"></circle>
+            <circle class="ring-fg" id="ring-fg" cx="39" cy="39" r="34"
+              stroke-dasharray="213.6" stroke-dashoffset="213.6"></circle>
+          </svg>
+          <div class="ring-text">
+            <span id="ring-pct">0%</span>
+            <small id="ring-frac">0/0</small>
+          </div>
+        </div>
+        <div class="target-info">
+          <div class="title" id="target-title">Target: 5 ayat/hari</div>
+          <div class="desc" id="target-desc">Belum ada setoran hari ini.</div>
+          <button class="btn small secondary" style="margin-top:8px;" onclick="openTargetModal()">⚙️ Ubah Target</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat"><div class="num" id="stat-ayat">0</div><div class="lbl">Ayat Dihafal</div></div>
+      <div class="stat"><div class="num" id="stat-surah">0</div><div class="lbl">Surat Selesai</div></div>
+      <div class="stat"><div class="num" id="stat-setoran">0</div><div class="lbl">Total Setoran</div></div>
+      <div class="stat"><div class="num" id="stat-due">0</div><div class="lbl">Murajaah Hari Ini</div></div>
+    </div>
+
+    <div class="card" id="halaqah-summary-card">
+      <h3>🧭 Rencana Halaqah Hari Ini</h3>
+      <div id="daily-plan-summary" style="font-size:13px;color:var(--muted);line-height:1.7">Menyiapkan rencana hafalan…</div>
+      <div class="btn-row"><button class="btn" onclick="useSuggestedSetoran()">➕ Mulai Setoran yang Disarankan</button><button class="btn secondary" onclick="openHalaqahSettings()">👥 Profil</button></div>
+    </div>
+
+    <div class="card">
+      <h3>📌 Tugas Hari Ini</h3>
+      <div id="home-tasks"></div>
+    </div>
+
+    <div class="card">
+      <h3>⚡ Aksi Cepat</h3>
+      <div class="btn-row">
+        <button class="btn" onclick="showView('setoran')">➕ Setoran</button>
+        <button class="btn secondary" onclick="showView('murajaah')">🔄 Murajaah</button>
+      </div>
+      <div style="height:8px;"></div>
+      <button class="btn ghost" onclick="openShareModal()">📤 Bagikan Rapor</button>
+    </div>
+  </div>
+
+  <!-- HAFALAN -->
+  <div class="view" id="view-hafalan">
+    <div class="filter-row">
+      <div class="chip active" onclick="filterHafalan('all', this)">Semua</div>
+      <div class="chip" onclick="filterHafalan('progress', this)">Sedang Hafal</div>
+      <div class="chip" onclick="filterHafalan('done', this)">Selesai</div>
+      <div class="chip" onclick="filterHafalan('empty', this)">Belum</div>
+    </div>
+    <div class="surah-list" id="surah-list"></div>
+  </div>
+
+  <!-- SETORAN -->
+  <div class="view" id="view-setoran">
+    <div class="card">
+      <h3>➕ Setoran Hafalan Baru</h3>
+      <div class="form-group">
+        <label>Surat</label>
+        <select id="setoran-surah" onchange="updateAyahInputs()"></select>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="form-group">
+          <label>Ayat Mulai</label>
+          <input type="number" id="setoran-start" min="1" value="1">
+        </div>
+        <div class="form-group">
+          <label>Ayat Selesai</label>
+          <input type="number" id="setoran-end" min="1" value="1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Kualitas Setoran</label>
+        <select id="setoran-quality">
+          <option value="lancar">😌 Lancar</option>
+          <option value="sulit">😅 Perlu Perbaikan</option>
+          <option value="lupa">😣 Banyak Lupa</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Catatan (opsional)</label>
+        <textarea id="setoran-note" placeholder="Ayat yang masih goyah, kesalahan tajwid, dll..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Rekaman Suara (opsional)</label>
+        <div class="rec-btn" id="rec-btn" onclick="toggleRecord()">
+          <span id="rec-icon">🎤</span>
+          <span id="rec-text">Tekan untuk merekam</span>
+        </div>
+        <audio id="rec-playback" controls style="width:100%; margin-top:8px; display:none;"></audio>
+      </div>
+      <button class="btn" onclick="submitSetoran()">💾 Simpan Setoran</button>
+    </div>
+
+    <div class="card">
+      <h3>📜 Riwayat Setoran</h3>
+      <div id="setoran-list"></div>
+    </div>
+  </div>
+
+  <!-- MURAJA'AH -->
+  <div class="view" id="view-murajaah">
+    <div id="murajaah-content"></div>
+  </div>
+
+  <!-- STATISTIK -->
+  <div class="view" id="view-statistik">
+    <div class="stat-grid">
+      <div class="stat"><div class="num" id="s-juz">0</div><div class="lbl">Estimasi Juz</div></div>
+      <div class="stat"><div class="num" id="s-ayat">0</div><div class="lbl">Total Ayat</div></div>
+      <div class="stat"><div class="num" id="s-surah">0</div><div class="lbl">Surat Selesai</div></div>
+      <div class="stat"><div class="num" id="s-streak">0</div><div class="lbl">Streak (hari)</div></div>
+    </div>
+
+    <div class="card">
+      <h3>📅 Kalender Hafalan (12 minggu)</h3>
+      <div class="heatmap-wrap">
+        <div class="heatmap" id="heatmap"></div>
+      </div>
+      <div class="heatmap-legend">
+        <span>Sedikit</span>
+        <div class="sq" style="background:#ebedf0;"></div>
+        <div class="sq" style="background:#9be9a8;"></div>
+        <div class="sq" style="background:#40c463;"></div>
+        <div class="sq" style="background:#30a14e;"></div>
+        <div class="sq" style="background:#216e39;"></div>
+        <span>Banyak</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📊 Setoran 7 Hari Terakhir</h3>
+      <div class="chart" id="chart"></div>
+      <div class="chart-labels" id="chart-labels"></div>
+    </div>
+
+    <div class="card">
+      <h3>🏆 Surat Selesai Dihafal</h3>
+      <div id="done-surah-list"></div>
+    </div>
+
+    <div class="card">
+      <h3>🎙️ Pilihan Qari</h3>
+      <div id="qari-settings"></div>
+    </div>
+
+    <div class="card">
+      <h3>🔔 Pengingat</h3>
+      <div id="reminder-settings"></div>
+    </div>
+
+    <div class="card">
+      <h3>🕌 Waktu Shalat</h3>
+      <div id="prayer-settings"></div>
+    </div>
+
+    <div class="card">
+      <h3>👥 Mode Halaqah</h3>
+      <div id="halaqah-profile-summary" style="font-size:13px;color:var(--muted);margin-bottom:10px"></div>
+      <button class="btn secondary" onclick="openHalaqahSettings()">Atur Profil Guru/Santri</button>
+      <div style="height:8px"></div>
+      <button class="btn secondary" onclick="showHalaqahReport()">📋 Lihat Rapor Halaqah</button>
+    </div>
+
+    <div class="card" id="firebase-card">
+      <h3>☁️ Akun & Sinkronisasi Firebase</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Data hafalan tetap tersimpan lokal. Setelah Firebase dikonfigurasi dan masuk akun, data profil dan hafalan dapat disinkronkan antarperangkat. Rekaman audio tetap di perangkat dan backup lokal.</p>
+      <div id="firebase-status" style="font-size:13px;margin-bottom:10px;padding:10px;border-radius:10px;background:var(--primary-light);color:var(--primary)">Firebase belum dikonfigurasi.</div>
+      <button class="btn secondary" onclick="openFirebaseSettings()">⚙️ Konfigurasi Firebase / Akun</button>
+      <div style="height:8px"></div>
+      <button class="btn secondary" onclick="firebaseSyncNow()">🔄 Sinkronkan Sekarang</button>
+      <div style="height:8px"></div>
+      <button class="btn secondary" onclick="firebaseLoadRoster()">👥 Muat Daftar Santri (Guru)</button>
+      <div id="firebase-roster" style="margin-top:10px;font-size:13px"></div>
+    </div>
+
+    <div class="card">
+      <h3>🛡️ Backup & Pemulihan</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Backup lengkap menyertakan data hafalan dan rekaman setoran yang tersimpan di perangkat.</p>
+      <button class="btn secondary" onclick="exportFullBackup()">📦 Backup Lengkap (termasuk audio)</button>
+      <div style="height:8px"></div>
+      <label class="btn secondary" for="backup-import-file" style="cursor:pointer">📥 Pulihkan dari Berkas Backup</label>
+      <input id="backup-import-file" type="file" accept="application/json,.json" onchange="importFullBackup(event)" style="display:none">
+      <div style="height:8px"></div>
+      <button class="btn secondary" onclick="exportData()">Ekspor Data Lama (JSON)</button>
+    </div>
+
+    <div class="card">
+      <h3>⚙️ Pengaturan Data</h3>
+      <button class="btn secondary" onclick="openShareModal()">📤 Bagikan Rapor</button>
+      <div style="height:8px;"></div>
+      <button class="btn danger" onclick="resetData()">🗑️ Reset Semua Data</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this) closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-item active" data-view="home" onclick="showView('home')">
+    <div class="icon">🏠</div><div>Beranda</div>
+  </div>
+  <div class="nav-item" data-view="hafalan" onclick="showView('hafalan')">
+    <div class="icon">📖</div><div>Hafalan</div>
+  </div>
+  <div class="nav-item" data-view="setoran" onclick="showView('setoran')">
+    <div class="icon">➕</div><div>Setoran</div>
+  </div>
+  <div class="nav-item" data-view="murajaah" onclick="showView('murajaah')">
+    <div class="icon">🔄</div><div>Murajaah</div>
+  </div>
+  <div class="nav-item" data-view="statistik" onclick="showView('statistik')">
+    <div class="icon">📊</div><div>Statistik</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ DATA SURAT ============ */
+const SURAHS = [
+["Al-Fatihah",7],["Al-Baqarah",286],["Ali 'Imran",200],["An-Nisa",176],["Al-Ma'idah",120],
+["Al-An'am",165],["Al-A'raf",206],["Al-Anfal",75],["At-Taubah",129],["Yunus",109],
+["Hud",123],["Yusuf",111],["Ar-Ra'd",43],["Ibrahim",52],["Al-Hijr",99],
+["An-Nahl",128],["Al-Isra",111],["Al-Kahf",110],["Maryam",98],["Ta-Ha",135],
+["Al-Anbiya",112],["Al-Hajj",78],["Al-Mu'minun",118],["An-Nur",64],["Al-Furqan",77],
+["Ash-Shu'ara",227],["An-Naml",93],["Al-Qasas",88],["Al-'Ankabut",69],["Ar-Rum",60],
+["Luqman",34],["As-Sajdah",30],["Al-Ahzab",73],["Saba",54],["Fatir",45],
+["Ya-Sin",83],["As-Saffat",182],["Sad",88],["Az-Zumar",75],["Ghafir",85],
+["Fussilat",54],["Ash-Shura",53],["Az-Zukhruf",89],["Ad-Dukhan",59],["Al-Jathiyah",37],
+["Al-Ahqaf",35],["Muhammad",38],["Al-Fath",29],["Al-Hujurat",18],["Qaf",45],
+["Adh-Dhariyat",60],["At-Tur",49],["An-Najm",62],["Al-Qamar",55],["Ar-Rahman",78],
+["Al-Waqi'ah",96],["Al-Hadid",29],["Al-Mujadilah",22],["Al-Hashr",24],["Al-Mumtahanah",13],
+["As-Saff",14],["Al-Jumu'ah",11],["Al-Munafiqun",11],["At-Taghabun",18],["At-Talaq",12],
+["At-Tahrim",12],["Al-Mulk",30],["Al-Qalam",52],["Al-Haqqah",52],["Al-Ma'arij",44],
+["Nuh",28],["Al-Jinn",28],["Al-Muzzammil",20],["Al-Muddaththir",56],["Al-Qiyamah",40],
+["Al-Insan",31],["Al-Mursalat",50],["An-Naba",40],["An-Nazi'at",46],["'Abasa",42],
+["At-Takwir",29],["Al-Infitar",19],["Al-Mutaffifin",36],["Al-Inshiqaq",25],["Al-Buruj",22],
+["At-Tariq",17],["Al-A'la",19],["Al-Ghashiyah",26],["Al-Fajr",30],["Al-Balad",20],
+["Ash-Shams",15],["Al-Layl",21],["Ad-Duha",11],["Ash-Sharh",8],["At-Tin",8],
+["Al-'Alaq",19],["Al-Qadr",5],["Al-Bayyinah",8],["Az-Zalzalah",8],["Al-'Adiyat",11],
+["Al-Qari'ah",11],["At-Takathur",8],["Al-'Asr",3],["Al-Humazah",9],["Al-Fil",5],
+["Quraysh",4],["Al-Ma'un",7],["Al-Kawthar",3],["Al-Kafirun",6],["An-Nasr",3],
+["Al-Masad",5],["Al-Ikhlas",4],["Al-Falaq",5],["An-Nas",6]
+];
+
+const GLOBAL_START = [0];
+let _acc = 1;
+for(let i=1;i<=114;i++){ GLOBAL_START[i] = _acc; _acc += SURAHS[i-1][1]; }
+
+/* Daftar Qari (menggunakan islamic.network CDN) */
+const QARIS = [
+  { id:"ar.alafasy",        name:"Mishary Alafasy",     style:"Murattal • Jernih",         emoji:"🎧" },
+  { id:"ar.abdulbasitmurattal", name:"Abdul Basit",     style:"Murattal • Klasik Mesir",   emoji:"🕌" },
+  { id:"ar.abdurrahmaansudais", name:"Abdurrahman Sudais", style:"Haramain • Khidmat",     emoji:"🕋" },
+  { id:"ar.minshawi",       name:"Muhammad Minshawi",   style:"Murattal • Tenang",         emoji:"📖" },
+  { id:"ar.husary",         name:"Mahmoud Khalil Al-Husary", style:"Murattal • Tajwid jelas", emoji:"🎙️" },
+  { id:"ar.saoodshuraym",   name:"Saood Asy-Syuraim",   style:"Haramain • Tegas",          emoji:"🕋" }
+];
+
+/* Metode waktu shalat (Kemenag Indonesia = 20) */
+const PRAYER_METHOD = 20;
+
+/* ============ STATE ============ */
+let state = {
+  memorized: {},
+  murajaah: {},
+  setoran: [],
+  streak: { last: null, count: 0 },
+  target: { dailyAyah: 5 },
+  reminder: { enabled: false, time: "19:00" },
+  qari: "ar.alafasy",
+  notifPermissionAsked: false,
+  profile: { name:"", role:"santri", halaqah:"", teacher:"" },
+  ayahReview: {},
+  plan: { dailyAyah:5, reviewFirst:true },
+  prayer: { lat:null, lng:null, city:"", timings:null, date:null, enabled:false, autoReminder:false }
+};
+
+/* ============ INDEXEDDB ============ */
+let db;
+function openDB(){
+  return new Promise((res, rej)=>{
+    const req = indexedDB.open('sanadku', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('audio');
+    req.onsuccess = e => { db = e.target.result; res(db); };
+    req.onerror = rej;
+  });
+}
+function saveAudio(id, blob){
+  return new Promise((res,rej)=>{
+    const tx = db.transaction('audio','readwrite');
+    tx.objectStore('audio').put(blob, id);
+    tx.oncomplete = res; tx.onerror = rej;
+  });
+}
+function getAudio(id){
+  return new Promise((res,rej)=>{
+    const tx = db.transaction('audio','readonly');
+    const r = tx.objectStore('audio').get(id);
+    r.onsuccess = ()=>res(r.result); r.onerror = rej;
+  });
+}
+
+/* ============ HELPERS ============ */
+function localDateString(d=new Date()){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function today(){ return localDateString(); }
+function addDays(dateStr, n){
+  const parts=dateStr.split('-').map(Number); const d=new Date(parts[0],parts[1]-1,parts[2],12,0,0);
+  d.setDate(d.getDate()+n); return localDateString(d);
+}
+function diffDays(a,b){
+  const pa=a.split('-').map(Number), pb=b.split('-').map(Number); return Math.round((new Date(pb[0],pb[1]-1,pb[2],12)-new Date(pa[0],pa[1]-1,pa[2],12))/(1000*60*60*24));
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function saveState(){ localStorage.setItem('sanadku_state', JSON.stringify(state)); if(!firebaseSyncInProgress && typeof scheduleFirebaseSync==='function')scheduleFirebaseSync(); }
+function loadState(){
+  const s = localStorage.getItem('sanadku_state');
+  if(s){ try{ state = Object.assign(state, JSON.parse(s)); }catch(e){} }
+  state.memorized = state.memorized || {};
+  state.murajaah = state.murajaah || {};
+  state.setoran = state.setoran || [];
+  state.streak = state.streak || { last:null, count:0 };
+  state.target = state.target || { dailyAyah: 5 };
+  state.reminder = state.reminder || { enabled:false, time:"19:00" };
+  state.qari = state.qari || "ar.alafasy";
+  state.prayer = state.prayer || { lat:null, lng:null, city:"", timings:null, date:null, enabled:false, autoReminder:false };
+  state.profile = Object.assign({name:"",role:"santri",halaqah:"",teacher:""}, state.profile || {});
+  state.ayahReview = state.ayahReview || {};
+  state.plan = Object.assign({dailyAyah: state.target.dailyAyah || 5, reviewFirst:true}, state.plan || {});
+}
+
+function totalAyatMemorized(){
+  return Object.values(state.memorized).reduce((a,b)=>a+b.length,0);
+}
+function surahIsDone(n){
+  return (state.memorized[n]||[]).length === SURAHS[n-1][1];
+}
+function countDoneSurah(){
+  let c=0;
+  for(let i=1;i<=114;i++) if(surahIsDone(i)) c++;
+  return c;
+}
+function estimateJuz(){ return (totalAyatMemorized()/200).toFixed(1); }
+
+function ayatHariIni(){
+  const t = today();
+  return state.setoran
+    .filter(s=>s.date === t)
+    .reduce((a,s)=>a+(s.end-s.start+1), 0);
+}
+
+function ayatPadaTanggal(d){
+  return state.setoran
+    .filter(s=>s.date === d)
+    .reduce((a,s)=>a+(s.end-s.start+1), 0);
+}
+
+function updateStreak(){
+  const t = today();
+  if(state.streak.last === t) return;
+  if(state.streak.last && diffDays(state.streak.last, t) === 1){
+    state.streak.count++;
+  } else {
+    state.streak.count = 1;
+  }
+  state.streak.last = t;
+}
+
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 2200);
+}
+
+function getQari(){ return QARIS.find(q=>q.id===state.qari) || QARIS[0]; }
+
+/* ============ NAVIGASI ============ */
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    n.classList.toggle('active', n.dataset.view === name);
+  });
+  if(name==='home') renderHome();
+  if(name==='hafalan') renderHafalan();
+  if(name==='setoran') renderSetoranView();
+  if(name==='murajaah') renderMurajaah();
+  if(name==='statistik') renderStatistik();
+  window.scrollTo(0,0);
+}
+
+/* ============ RENDER: BERANDA ============ */
+function renderHome(){
+  document.getElementById('home-streak').textContent = state.streak.count || 0;
+  document.getElementById('stat-ayat').textContent = totalAyatMemorized();
+  document.getElementById('stat-surah').textContent = countDoneSurah();
+  document.getElementById('stat-setoran').textContent = state.setoran.length;
+
+  const totalAyat = 6236;
+  const pct = ((totalAyatMemorized()/totalAyat)*100).toFixed(2);
+  document.getElementById('home-progress-pct').textContent = pct + '%';
+  document.getElementById('home-progress-bar').style.width = Math.min(pct,100) + '%';
+
+  const due = getDueMurajaah();
+  document.getElementById('stat-due').textContent = due.length;
+
+  // Target ring
+  const tgt = state.target.dailyAyah || 5;
+  const done = ayatHariIni();
+  const pctTarget = Math.min(done / tgt, 1);
+  const circ = 2 * Math.PI * 34;
+  document.getElementById('ring-fg').setAttribute('stroke-dasharray', circ);
+  document.getElementById('ring-fg').setAttribute('stroke-dashoffset', circ * (1 - pctTarget));
+  document.getElementById('ring-pct').textContent = Math.round(pctTarget*100) + '%';
+  document.getElementById('ring-frac').textContent = `${done}/${tgt}`;
+  document.getElementById('target-title').textContent = `Target: ${tgt} ayat/hari`;
+  const descEl = document.getElementById('target-desc');
+  if(done === 0) descEl.textContent = 'Belum ada setoran hari ini. Yuk mulai!';
+  else if(done >= tgt) descEl.textContent = `🎉 Alhamdulillah! Target hari ini tercapai (${done} ayat).`;
+  else descEl.textContent = `Kurang ${tgt - done} ayat lagi untuk mencapai target.`;
+
+  // Notif banner
+  const bw = document.getElementById('notif-banner-wrap');
+  if(!state.notifPermissionAsked && 'Notification' in window && Notification.permission === 'default'){
+    bw.innerHTML = `<div class="notif-perm-banner">
+      <span>🔔 Aktifkan notifikasi untuk pengingat murajaah & waktu shalat?</span>
+      <button onclick="requestNotifPermission()">Aktifkan</button>
+    </div>`;
+  } else {
+    bw.innerHTML = '';
+  }
+
+  // Waktu shalat card
+  renderPrayerCard();
+
+  // Tugas hari ini
+  const tasks = document.getElementById('home-tasks');
+  let html = '';
+  if(due.length > 0){
+    html += `<div style="padding:12px; background:var(--primary-light); border-radius:10px; margin-bottom:8px;">
+      <div style="font-weight:700; color:var(--primary);">🔄 ${due.length} surat menunggu murajaah</div>
+      <div style="font-size:12px; color:var(--muted); margin-top:4px;">${due.map(n=>SURAHS[n-1][0]).slice(0,3).join(', ')}${due.length>3?'...':''}</div>
+    </div>`;
+  } else {
+    html += `<div style="padding:12px; background:#e6f7ee; border-radius:10px; margin-bottom:8px;">
+      <div style="font-weight:700; color:var(--success);">✅ Murajaah hari ini tuntas!</div>
+      <div style="font-size:12px; color:var(--muted); margin-top:4px;">Alhamdulillah, lanjutkan besok.</div>
+    </div>`;
+  }
+  const lastSetoran = state.setoran[0];
+  if(lastSetoran){
+    html += `<div style="font-size:12px; color:var(--muted); margin-top:8px;">
+      Setoran terakhir: <b>${SURAHS[lastSetoran.surah-1][0]}: ${lastSetoran.start}–${lastSetoran.end}</b>
+    </div>`;
+  } else {
+    html += `<div style="font-size:13px; color:var(--muted);">Belum ada setoran. Mulai perjalanan Anda dengan Basmalah 🤲</div>`;
+  }
+  tasks.innerHTML = html;
+}
+
+/* ============ WAKTU SHALAT ============ */
+const PRAYER_NAMES = { Fajr:'Subuh', Dhuhr:'Dzuhur', Asr:'Ashar', Maghrib:'Maghrib', Isha:'Isya', Sunrise:'Syuruq' };
+const PRAYER_ORDER = ['Fajr','Dhuhr','Asr','Maghrib','Isha'];
+
+function renderPrayerCard(){
+  const cont = document.getElementById('prayer-content');
+  const loc = document.getElementById('prayer-loc');
+  if(!state.prayer.timings){
+    loc.textContent = '';
+    cont.innerHTML = `<div style="font-size:12px; color:var(--muted); margin-bottom:10px;">Aktifkan untuk melihat waktu shalat & pengingat otomatis setelah adzan.</div>
+      <button class="btn small secondary" onclick="enablePrayerTimes()">📍 Aktifkan Waktu Shalat</button>`;
+    return;
+  }
+  loc.textContent = state.prayer.city || '';
+  const t = state.prayer.timings;
+  const now = new Date();
+  const nowMin = now.getHours()*60 + now.getMinutes();
+
+  // Cari shalat berikutnya
+  let next = null;
+  for(const p of PRAYER_ORDER){
+    const [h,m] = t[p].split(':').map(Number);
+    const pMin = h*60 + m;
+    if(pMin > nowMin){ next = p; break; }
+  }
+  if(!next) next = 'Fajr'; // besok subuh
+
+  cont.innerHTML = `<div class="prayer-grid">
+    ${PRAYER_ORDER.map(p=>{
+      const isNext = p === next;
+      return `<div class="prayer-item ${isNext?'next':''}">
+        <div class="name">${PRAYER_NAMES[p]}</div>
+        <div class="time">${t[p]}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+async function enablePrayerTimes(){
+  if(!('geolocation' in navigator)){ toast('Geolocation tidak didukung'); return; }
+  toast('📍 Mengambil lokasi...');
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const { latitude, longitude } = pos.coords;
+    state.prayer.lat = latitude;
+    state.prayer.lng = longitude;
+    await fetchPrayerTimes();
+    saveState();
+    renderHome();
+    if(document.getElementById('view-statistik').classList.contains('active')) renderStatistik();
+  }, err=>{
+    toast('Gagal ambil lokasi. Aktifkan GPS.');
+  }, { timeout: 15000 });
+}
+
+async function fetchPrayerTimes(){
+  const { lat, lng } = state.prayer;
+  if(lat == null || lng == null) return;
+  try {
+    const d = new Date();
+    const dateStr = `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`;
+    const url = `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lng}&method=${PRAYER_METHOD}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if(json.code === 200 && json.data){
+      state.prayer.timings = json.data.timings;
+      state.prayer.date = today();
+      state.prayer.city = (json.data.meta && json.data.meta.timezone) || '';
+    }
+  } catch(e){ console.warn('prayer fetch', e); }
+}
+
+function renderPrayerSettings(){
+  const el = document.getElementById('prayer-settings');
+  const active = !!state.prayer.timings;
+  el.innerHTML = `
+    <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">
+      ${active ? `✓ Aktif ${state.prayer.city?'• '+state.prayer.city:''}` : 'Belum aktif'}
+    </div>
+    ${active ? `
+      <button class="btn secondary" onclick="fetchPrayerTimes().then(()=>{renderStatistik();renderHome();})">🔄 Perbarui</button>
+      <div style="height:8px;"></div>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+        <input type="checkbox" id="prayer-auto" ${state.prayer.autoReminder?'checked':''} onchange="togglePrayerReminder()" style="width:20px; height:20px;">
+        <label for="prayer-auto" style="font-size:13px; font-weight:600;">Notifikasi setelah adzan (Subuh, Dzuhur, Ashar, Maghrib, Isya)</label>
+      </div>
+      <button class="btn ghost" onclick="testPrayerNotif()">🧪 Coba Notifikasi Shalat</button>
+    ` : `
+      <button class="btn" onclick="enablePrayerTimes()">📍 Aktifkan Waktu Shalat</button>
+    `}
+  `;
+}
+
+function togglePrayerReminder(){
+  state.prayer.autoReminder = document.getElementById('prayer-auto').checked;
+  saveState();
+  if(state.prayer.autoReminder) toast('🔔 Pengingat shalat aktif');
+}
+
+let lastPrayerNotif = {};
+function checkPrayerReminder(){
+  if(!state.prayer.autoReminder || !state.prayer.timings) return;
+  if(Notification.permission !== 'granted') return;
+  const now = new Date();
+  const t = today();
+  for(const p of PRAYER_ORDER){
+    const [h,m] = state.prayer.timings[p].split(':').map(Number);
+    const target = new Date(); target.setHours(h, m, 5, 0);
+    const diffMin = (now - target) / 60000;
+    const key = `${t}-${p}`;
+    if(diffMin >= 0 && diffMin < 3 && !lastPrayerNotif[key]){
+      lastPrayerNotif[key] = true;
+      const messages = {
+        Fajr: 'Subuh telah masuk. Waktu terbaik menghafal! 🌅',
+        Dhuhr: 'Dzuhur telah masuk. Jangan lupa murajaah ringan.',
+        Asr: 'Ashar telah masuk. Sempatkan review hafalan.',
+        Maghrib: 'Maghrib telah masuk. Waktu utama murajaah 📖',
+        Isha: 'Isya telah masuk. Tutup hari dengan murajaah.'
+      };
+      try {
+        new Notification(`🕌 Waktu ${PRAYER_NAMES[p]}`, { body: messages[p], tag:`prayer-${p}` });
+      } catch(e){}
+    }
+  }
+}
+function testPrayerNotif(){
+  if(Notification.permission !== 'granted'){ toast('Izinkan notifikasi dulu'); return; }
+  new Notification('🕌 Contoh Waktu Shalat', { body:'Maghrib telah masuk. Waktu utama murajaah 📖' });
+}
+
+/* ============ TARGET ============ */
+function openTargetModal(){
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>🎯 Target Harian</h2>
+    <div class="sub">Berapa ayat yang ingin Anda setorkan setiap hari?</div>
+    <div class="form-group">
+      <label>Target ayat per hari</label>
+      <input type="number" id="target-input" min="1" max="50" value="${state.target.dailyAyah||5}">
+      <div class="hint">Saran: mulai dari 3–5 ayat/hari untuk menjaga konsistensi.</div>
+    </div>
+    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;">
+      ${[3,5,10,15,20].map(n=>`<button class="chip" onclick="document.getElementById('target-input').value=${n}">${n} ayat</button>`).join('')}
+    </div>
+    <button class="btn" onclick="saveTarget()">💾 Simpan Target</button>
+  `;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+function saveTarget(){
+  const v = parseInt(document.getElementById('target-input').value);
+  if(!v || v < 1){ toast('Target tidak valid'); return; }
+  state.target.dailyAyah = v;
+  saveState(); closeModal(); renderHome();
+  toast(`🎯 Target diset: ${v} ayat/hari`);
+}
+
+/* ============ NOTIFIKASI ============ */
+async function requestNotifPermission(){
+  if(!('Notification' in window)){ toast('Browser tidak mendukung notifikasi'); return; }
+  const perm = await Notification.requestPermission();
+  state.notifPermissionAsked = true;
+  saveState();
+  if(perm === 'granted'){
+    toast('🔔 Notifikasi aktif');
+    state.reminder.enabled = true;
+    if(!state.reminder.time) state.reminder.time = '19:00';
+    saveState();
+    scheduleReminder();
+  } else {
+    toast('Notifikasi tidak diizinkan');
+  }
+  renderHome();
+  if(document.getElementById('view-statistik').classList.contains('active')) renderStatistik();
+}
+
+let reminderTimer = null;
+function scheduleReminder(){
+  if(reminderTimer) clearInterval(reminderTimer);
+  reminderTimer = setInterval(()=>{ checkReminder(); checkPrayerReminder(); }, 60 * 1000);
+  checkReminder();
+  checkPrayerReminder();
+}
+let lastNotifDate = null;
+function checkReminder(){
+  if(!state.reminder.enabled) return;
+  if(Notification.permission !== 'granted') return;
+  const now = new Date();
+  const [h, m] = state.reminder.time.split(':').map(Number);
+  const target = new Date(); target.setHours(h, m, 0, 0);
+  const t = today();
+  if(now >= target && lastNotifDate !== t){
+    lastNotifDate = t;
+    showReminderNotif();
+  }
+}
+function showReminderNotif(){
+  const due = getDueMurajaah();
+  const tgt = state.target.dailyAyah || 5;
+  const done = ayatHariIni();
+  let body = '';
+  if(due.length > 0) body = `Ada ${due.length} surat menunggu murajaah.`;
+  else if(done < tgt) body = `Setoran hari ini ${done}/${tgt} ayat. Yuk lanjutkan!`;
+  else body = `Alhamdulillah, target hari ini tercapai. Jangan lupa murajaah ringan.`;
+  try {
+    new Notification('📖 SanadKu — Waktunya Murajaah', { body, tag:'sanadku-reminder' });
+  } catch(e){ console.warn(e); }
+}
+
+function renderReminderSettings(){
+  const el = document.getElementById('reminder-settings');
+  const perm = ('Notification' in window) ? Notification.permission : 'unsupported';
+  let statusLine = '';
+  if(perm === 'granted') statusLine = '<span style="color:var(--success); font-weight:700;">✓ Aktif</span>';
+  else if(perm === 'denied') statusLine = '<span style="color:var(--danger); font-weight:700;">✕ Diblokir (buka setting browser)</span>';
+  else if(perm === 'unsupported') statusLine = '<span style="color:var(--muted);">Tidak didukung browser</span>';
+  else statusLine = '<span style="color:var(--warning); font-weight:700;">Belum diizinkan</span>';
+
+  el.innerHTML = `
+    <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Status izin: ${statusLine}</div>
+    <div class="form-group">
+      <label>Jam Pengingat Murajaah</label>
+      <input type="time" id="reminder-time" value="${state.reminder.time||'19:00'}" onchange="saveReminder()">
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+      <input type="checkbox" id="reminder-enabled" ${state.reminder.enabled?'checked':''} onchange="saveReminder()" style="width:20px; height:20px;">
+      <label for="reminder-enabled" style="font-size:13px; font-weight:600;">Aktifkan pengingat harian</label>
+    </div>
+    ${perm !== 'granted' ? `<button class="btn secondary" onclick="requestNotifPermission()">🔔 Minta Izin Notifikasi</button><div style="height:8px;"></div>` : ''}
+    <button class="btn ghost" onclick="testNotif()">🧪 Coba Notifikasi</button>
+  `;
+}
+function saveReminder(){
+  const t = document.getElementById('reminder-time').value;
+  const en = document.getElementById('reminder-enabled').checked;
+  state.reminder.time = t || '19:00';
+  state.reminder.enabled = en;
+  saveState();
+  scheduleReminder();
+  toast(en ? `🔔 Pengingat aktif pukul ${state.reminder.time}` : '🔕 Pengingat dimatikan');
+}
+function testNotif(){
+  if(Notification.permission !== 'granted'){ toast('Izin notifikasi belum diberikan'); return; }
+  new Notification('📖 SanadKu', { body: 'Ini contoh notifikasi pengingat.' });
+}
+
+/* ============ QARI ============ */
+function renderQariSettings(){
+  const el = document.getElementById('qari-settings');
+  el.innerHTML = QARIS.map(q=>`
+    <div class="qari-option ${state.qari===q.id?'active':''}" onclick="selectQari('${q.id}')">
+      <div class="q-icon">${q.emoji}</div>
+      <div class="q-info">
+        <div class="q-name">${q.name}</div>
+        <div class="q-style">${q.style}</div>
+      </div>
+      ${state.qari===q.id?'<span style="color:var(--primary); font-size:18px;">✓</span>':''}
+    </div>
+  `).join('');
+  el.insertAdjacentHTML('beforeend', `<div class="hint" style="margin-top:10px; font-size:11px; color:var(--muted);">Digunakan saat memutar audio di tampilan Mushaf.</div>`);
+}
+function selectQari(id){
+  state.qari = id;
+  saveState();
+  renderQariSettings();
+  toast(`🎙️ Qari: ${getQari().name}`);
+}
+
+/* ============ HAFALAN ============ */
+let hafalanFilter = 'all';
+function filterHafalan(f, el){
+  hafalanFilter = f;
+  document.querySelectorAll('#view-hafalan .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderHafalan();
+}
+function renderHafalan(){
+  const list = document.getElementById('surah-list');
+  let html = '';
+  for(let i=1;i<=114;i++){
+    const [name, total] = SURAHS[i-1];
+    const mem = (state.memorized[i]||[]).length;
+    const done = mem === total;
+    const prog = mem > 0 && !done;
+    if(hafalanFilter==='done' && !done) continue;
+    if(hafalanFilter==='progress' && !prog) continue;
+    if(hafalanFilter==='empty' && mem > 0) continue;
+
+    html += `<div class="surah-item ${done?'done':''}" onclick="openMushaf(${i})">
+      <div class="surah-num">${i}</div>
+      <div class="surah-info">
+        <div class="name">${name}</div>
+        <div class="meta">${total} ayat</div>
+      </div>
+      <div class="surah-progress">${done?'✅':mem+'/'+total}</div>
+    </div>`;
+  }
+  list.innerHTML = html || '<div class="empty"><div class="em">📭</div><p>Tidak ada surat di kategori ini.</p></div>';
+}
+
+/* ============ MUSHAF ============ */
+let currentAudio = null;
+let currentPlayingCell = null;
+
+async function openMushaf(n){
+  const [name, total] = SURAHS[n-1];
+  const modal = document.getElementById('modal');
+  const q = getQari();
+  modal.innerHTML = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>${name}</h2>
+    <div class="sub">Surat ke-${n} • ${total} ayat • Teks digital rasm Utsmani • Sumber: <a href="https://alquran.cloud/api" target="_blank" rel="noopener">AlQuran Cloud</a> • Qari: <b>${q.name}</b></div>
+    <div class="mushaf-toolbar">
+      <button onclick="selectAllAyah(${n}, true)">✓ Tandai Semua</button>
+      <button onclick="selectAllAyah(${n}, false)">✕ Kosongkan</button>
+      <button onclick="openRangeSelect(${n})">📏 Range</button>
+      <button onclick="openQariPicker()">🎙️ Ganti Qari</button>
+    </div>
+    <div id="mushaf-content-${n}">
+      <div class="loading"><div class="spin"></div>Memuat teks Al-Qur'an...</div>
+    </div>
+    <button class="btn" id="mushaf-save-btn" onclick="saveSurah(${n})" style="margin-top:14px;">
+      💾 Simpan
+    </button>
+  `;
+  document.getElementById('modal-overlay').classList.add('active');
+
+  try {
+    const [arabicRes, transRes] = await Promise.all([
+      fetch(`https://api.alquran.cloud/v1/surah/${n}/quran-uthmani`),
+      fetch(`https://api.alquran.cloud/v1/surah/${n}/id.indonesian`)
+    ]);
+    const json = await arabicRes.json();
+    let translations=[];
+    if(transRes.ok){ const tj=await transRes.json(); translations=tj.data?.ayahs || []; }
+    if(!json.data || !json.data.ayahs) throw new Error('Teks Arab tidak tersedia');
+    renderMushafAyahs(n, json.data.ayahs, translations);
+  } catch(e){
+    document.getElementById(`mushaf-content-${n}`).innerHTML = `
+      <div class="empty"><div class="em">📡</div>
+        <p>Tidak dapat memuat teks Al-Qur'an.<br>Periksa koneksi internet.</p>
+        <button class="btn secondary" style="margin-top:12px;" onclick="openMushafGrid(${n})">Mode Grid Sederhana</button>
+      </div>`;
+  }
+  updateMushafSaveBtn(n);
+}
+
+function renderMushafAyahs(n, ayahs, translations=[]){
+  const mem = new Set(state.memorized[n] || []);
+  const cont = document.getElementById(`mushaf-content-${n}`);
+  const globalStart = GLOBAL_START[n];
+  cont.innerHTML = ayahs.map(a=>{
+    const isMem = mem.has(a.numberInSurah);
+    const globalNum = globalStart + (a.numberInSurah - 1);
+    const tr=translations[a.numberInSurah-1]?.text || '';
+    const review=state.ayahReview[`${n}:${a.numberInSurah}`];
+    const reviewLabel=review ? ({lancar:'Lancar',sulit:'Perlu diulang',lupa:'Belum lancar'}[review.grade]||'Belum dievaluasi') : 'Belum dievaluasi';
+    return `<div class="mushaf-ayah ${isMem?'mem':''}" id="ayah-${n}-${a.numberInSurah}" data-ayah="${a.numberInSurah}">
+      <div class="mushaf-arabic">${a.text}<span class="ayah-num-badge">${a.numberInSurah}</span></div>
+      ${tr?`<div style="font-size:13px;line-height:1.7;color:var(--muted);margin:8px 0 12px">${tr}</div>`:''}
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Evaluasi: <b>${reviewLabel}</b></div>
+      <div class="mushaf-actions">
+        <button onclick="playAyah(${globalNum}, ${n}, ${a.numberInSurah}, this)" id="play-btn-${n}-${a.numberInSurah}">▶️ Putar</button>
+        <button onclick="toggleAyah(${n}, ${a.numberInSurah}, this)" class="${isMem?'primary':''}">${isMem?'✓ Sudah Hafal':'Tandai Hafal'}</button>
+        <button onclick="gradeAyahReview(${n},${a.numberInSurah},'lancar')">✓ Lancar</button>
+        <button onclick="gradeAyahReview(${n},${a.numberInSurah},'sulit')">↻ Sulit</button>
+        <button onclick="gradeAyahReview(${n},${a.numberInSurah},'lupa')">! Lupa</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openQariPicker(){
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>🎙️ Pilih Qari</h2>
+    <div class="sub">Pilih qari untuk pemutaran audio murottal</div>
+    ${QARIS.map(q=>`
+      <div class="qari-option ${state.qari===q.id?'active':''}" onclick="selectQariFromMushaf('${q.id}')">
+        <div class="q-icon">${q.emoji}</div>
+        <div class="q-info">
+          <div class="q-name">${q.name}</div>
+          <div class="q-style">${q.style}</div>
+        </div>
+        ${state.qari===q.id?'<span style="color:var(--primary); font-size:18px;">✓</span>':''}
+      </div>
+    `).join('')}
+  `;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+function selectQariFromMushaf(id){
+  state.qari = id;
+  saveState();
+  closeModal();
+  toast(`🎙️ Qari: ${getQari().name}`);
+}
+
+function openMushafGrid(n){
+  const total = SURAHS[n-1][1];
+  const mem = new Set(state.memorized[n]||[]);
+  const cont = document.getElementById(`mushaf-content-${n}`);
+  cont.innerHTML = `<div class="ayah-grid" id="ayah-grid-${n}">
+    ${Array.from({length:total},(_,i)=>{
+      const a = i+1;
+      return `<div class="ayah-cell ${mem.has(a)?'on':''}" data-ayah="${a}" onclick="toggleAyah(${n}, ${a}, this)">${a}</div>`;
+    }).join('')}
+  </div>`;
+  updateMushafSaveBtn(n);
+}
+
+function toggleAyah(n, a, el){
+  if(el.classList.contains('ayah-cell')){
+    el.classList.toggle('on');
+  } else {
+    const parent = el.closest('.mushaf-ayah');
+    if(parent){
+      parent.classList.toggle('mem');
+      const isMem = parent.classList.contains('mem');
+      el.classList.toggle('primary', isMem);
+      el.textContent = isMem ? '✓ Sudah Hafal' : 'Tandai Hafal';
+    }
+  }
+  updateMushafSaveBtn(n);
+}
+
+function updateMushafSaveBtn(n){
+  const total = SURAHS[n-1][1];
+  let count = 0;
+  const grid = document.querySelectorAll(`#ayah-grid-${n} .ayah-cell.on`);
+  if(grid.length > 0){
+    count = grid.length;
+  } else {
+    count = document.querySelectorAll(`#mushaf-content-${n} .mushaf-ayah.mem`).length;
+  }
+  const btn = document.getElementById('mushaf-save-btn');
+  if(btn) btn.textContent = `💾 Simpan (${count}/${total})`;
+}
+
+function selectAllAyah(n, on){
+  const grid = document.querySelectorAll(`#ayah-grid-${n} .ayah-cell`);
+  if(grid.length > 0) grid.forEach(c=>c.classList.toggle('on', on));
+  document.querySelectorAll(`#mushaf-content-${n} .mushaf-ayah`).forEach(ay=>{
+    ay.classList.toggle('mem', on);
+    const btn = ay.querySelector('.mushaf-actions button:nth-child(2)');
+    if(btn){ btn.classList.toggle('primary', on); btn.textContent = on?'✓ Sudah Hafal':'Tandai Hafal'; }
+  });
+  updateMushafSaveBtn(n);
+}
+
+function openRangeSelect(n){
+  const total = SURAHS[n-1][1];
+  const start = prompt(`Ayat mulai (1-${total}):`);
+  if(!start) return;
+  const end = prompt(`Ayat selesai (${start}-${total}):`);
+  if(!end) return;
+  const s = Math.max(1, parseInt(start));
+  const e = Math.min(total, parseInt(end));
+  if(s > e){ toast('Range tidak valid'); return; }
+  document.querySelectorAll(`#mushaf-content-${n} .mushaf-ayah`).forEach(ay=>{
+    const a = parseInt(ay.dataset.ayah);
+    if(a >= s && a <= e){
+      ay.classList.add('mem');
+      const btn = ay.querySelector('.mushaf-actions button:nth-child(2)');
+      if(btn){ btn.classList.add('primary'); btn.textContent = '✓ Sudah Hafal'; }
+    }
+  });
+  updateMushafSaveBtn(n);
+}
+
+function playAyah(globalNum, surahNum, ayahNum, btn){
+  if(currentAudio){
+    currentAudio.pause();
+    currentAudio = null;
+    if(currentPlayingCell){
+      currentPlayingCell.classList.remove('playing');
+      const pb = currentPlayingCell.querySelector('.mushaf-actions button:first-child');
+      if(pb){ pb.textContent = '▶️ Putar'; pb.classList.remove('playing'); }
+    }
+  }
+  const q = getQari();
+  const url = `https://cdn.islamic.network/quran/audio/128/${q.id}/${globalNum}.mp3`;
+  const audio = new Audio(url);
+  currentAudio = audio;
+  const cell = document.getElementById(`ayah-${surahNum}-${ayahNum}`);
+  currentPlayingCell = cell;
+  if(cell) cell.classList.add('playing');
+  if(btn){ btn.textContent = '⏸️ Berhenti'; btn.classList.add('playing'); }
+
+  audio.play().catch(e=>{
+    toast('Gagal memutar audio');
+    if(cell) cell.classList.remove('playing');
+    if(btn){ btn.textContent = '▶️ Putar'; btn.classList.remove('playing'); }
+  });
+  audio.onended = ()=>{
+    if(cell) cell.classList.remove('playing');
+    if(btn){ btn.textContent = '▶️ Putar'; btn.classList.remove('playing'); }
+    if(currentAudio === audio) currentAudio = null;
+    if(currentPlayingCell === cell) currentPlayingCell = null;
+  };
+}
+
+function saveSurah(n){
+  let on = [];
+  const grid = document.querySelectorAll(`#ayah-grid-${n} .ayah-cell.on`);
+  if(grid.length > 0){
+    on = Array.from(grid).map(c=>parseInt(c.dataset.ayah));
+  } else {
+    on = Array.from(document.querySelectorAll(`#mushaf-content-${n} .mushaf-ayah.mem`))
+      .map(ay=>parseInt(ay.dataset.ayah));
+  }
+  on.sort((a,b)=>a-b);
+
+  if(currentAudio){ currentAudio.pause(); currentAudio = null; }
+  if(currentPlayingCell){ currentPlayingCell.classList.remove('playing'); currentPlayingCell = null; }
+
+  state.memorized[n] = on;
+  if(on.length === 0) delete state.memorized[n];
+
+  if(on.length > 0){
+    if(!state.murajaah[n]){
+      state.murajaah[n] = { ease:2.5, interval:1, due:addDays(today(),1), lastReview:null, reps:0 };
+    }
+  } else {
+    delete state.murajaah[n];
+  }
+  saveState();
+  closeModal();
+  renderHafalan();
+  toast(`✅ ${SURAHS[n-1][0]} tersimpan (${on.length}/${SURAHS[n-1][1]})`);
+}
+
+/* ============ SETORAN ============ */
+function renderSetoranView(){
+  const sel = document.getElementById('setoran-surah');
+  if(sel.options.length === 0){
+    sel.innerHTML = SURAHS.map(([name],i)=>`<option value="${i+1}">${i+1}. ${name}</option>`).join('');
+  }
+  updateAyahInputs();
+  renderSetoranList();
+}
+
+function updateAyahInputs(){
+  const n = parseInt(document.getElementById('setoran-surah').value);
+  const total = SURAHS[n-1][1];
+  const start = document.getElementById('setoran-start');
+  const end = document.getElementById('setoran-end');
+  start.max = total; end.max = total;
+  if(parseInt(start.value) > total) start.value = 1;
+  if(parseInt(end.value) > total) end.value = total;
+  const mem = state.memorized[n] || [];
+  if(mem.length > 0){
+    const next = Math.max(...mem) + 1;
+    if(next <= total){
+      start.value = next;
+      end.value = Math.min(next + 4, total);
+    }
+  }
+}
+
+function renderSetoranList(){
+  const list = document.getElementById('setoran-list');
+  if(state.setoran.length === 0){
+    list.innerHTML = '<div class="empty"><div class="em">📝</div><p>Belum ada setoran. Yuk mulai!</p></div>';
+    return;
+  }
+  const recent = state.setoran.slice(0,20);
+  list.innerHTML = recent.map(s=>{
+    const q = s.quality;
+    const em = q==='lancar'?'✓':q==='sulit'?'~':'!';
+    return `<div class="setoran-item" onclick="openSetoranDetail('${s.id}')">
+      <div class="badge ${q}"><div class="big">${em}</div>${q.slice(0,3).toUpperCase()}</div>
+      <div class="setoran-info">
+        <div class="title">${SURAHS[s.surah-1][0]} : ${s.start}–${s.end}</div>
+        <div class="meta">${new Date(s.date).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</div>
+        ${s.note?`<div class="note">${s.note}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openSetoranDetail(id){
+  const s = state.setoran.find(x=>x.id===id);
+  if(!s) return;
+  const modal = document.getElementById('modal');
+  let audioHtml = '';
+  if(s.hasAudio){
+    const blob = await getAudio(id);
+    if(blob){
+      const url = URL.createObjectURL(blob);
+      audioHtml = `<div class="form-group">
+        <label>🎧 Rekaman Setoran</label>
+        <audio controls src="${url}" style="width:100%"></audio>
+      </div>`;
+    }
+  }
+  modal.innerHTML = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>${SURAHS[s.surah-1][0]}</h2>
+    <div class="sub">Ayat ${s.start}–${s.end} • ${new Date(s.date).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</div>
+    <div style="padding:12px; background:var(--bg); border-radius:10px; margin-bottom:12px;">
+      <div style="font-size:12px; color:var(--muted); font-weight:600; text-transform:uppercase;">Kualitas</div>
+      <div style="font-weight:700; font-size:16px; margin-top:4px; color:${s.quality==='lancar'?'var(--success)':s.quality==='sulit'?'var(--warning)':'var(--danger)'};">
+        ${s.quality==='lancar'?'😌 Lancar':s.quality==='sulit'?'😅 Perlu Perbaikan':'😣 Banyak Lupa'}
+      </div>
+    </div>
+    ${s.note?`<div class="form-group"><label>Catatan</label><div style="padding:12px; background:var(--bg); border-radius:10px; font-size:14px;">${s.note}</div></div>`:''}
+    ${audioHtml}
+    <button class="btn secondary" onclick="openMushafFromSetoran(${s.surah}, ${s.start})">📖 Buka Mushaf</button>
+    <div style="height:8px;"></div>
+    <button class="btn danger" onclick="deleteSetoran('${s.id}')">🗑️ Hapus Setoran</button>
+  `;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function openMushafFromSetoran(n, targetAyah){
+  closeModal();
+  setTimeout(()=>{
+    openMushaf(n).then(()=>{
+      const el = document.getElementById(`ayah-${n}-${targetAyah}`);
+      if(el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+    });
+  }, 200);
+}
+
+function deleteSetoran(id){
+  if(!confirm('Hapus setoran ini?')) return;
+  state.setoran = state.setoran.filter(s=>s.id!==id);
+  saveState();
+  closeModal();
+  renderSetoranList();
+  toast('Setoran dihapus');
+}
+
+/* ============ REKAM AUDIO ============ */
+let mediaRecorder, audioChunks = [], currentBlob = null;
+
+async function toggleRecord(){
+  const btn = document.getElementById('rec-btn');
+  const icon = document.getElementById('rec-icon');
+  const txt = document.getElementById('rec-text');
+
+  if(mediaRecorder && mediaRecorder.state === 'recording'){
+    mediaRecorder.stop();
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = ()=>{
+      currentBlob = new Blob(audioChunks, { type:'audio/webm' });
+      const url = URL.createObjectURL(currentBlob);
+      const player = document.getElementById('rec-playback');
+      player.src = url;
+      player.style.display = 'block';
+      btn.classList.remove('recording');
+      icon.textContent = '🎤';
+      txt.textContent = 'Rekam ulang';
+      stream.getTracks().forEach(t=>t.stop());
+    };
+    mediaRecorder.start();
+    btn.classList.add('recording');
+    icon.textContent = '⏹️';
+    txt.textContent = 'Merekam... tekan untuk berhenti';
+  } catch(e){
+    toast('Tidak dapat mengakses mikrofon');
+  }
+}
+
+async function submitSetoran(){
+  const surah = parseInt(document.getElementById('setoran-surah').value);
+  const start = parseInt(document.getElementById('setoran-start').value);
+  const end = parseInt(document.getElementById('setoran-end').value);
+  const quality = document.getElementById('setoran-quality').value;
+  const note = document.getElementById('setoran-note').value.trim();
+  const total = SURAHS[surah-1][1];
+
+  if(!start || !end || start < 1 || end > total || start > end){
+    toast('Range ayat tidak valid'); return;
+  }
+
+  const id = uid();
+  const hasAudio = !!currentBlob;
+
+  state.setoran.unshift({ id, surah, start, end, date: today(), quality, note, hasAudio });
+
+  if(hasAudio){
+    await saveAudio(id, currentBlob);
+    currentBlob = null;
+  }
+
+  const mem = new Set(state.memorized[surah] || []);
+  for(let a = start; a <= end; a++) mem.add(a);
+  state.memorized[surah] = Array.from(mem).sort((a,b)=>a-b);
+
+  if(!state.murajaah[surah]){
+    state.murajaah[surah] = { ease:2.5, interval:1, due:addDays(today(),1), lastReview:null, reps:0 };
+  }
+
+  updateStreak();
+  saveState();
+
+  document.getElementById('setoran-note').value = '';
+  document.getElementById('rec-playback').style.display = 'none';
+  document.getElementById('rec-playback').src = '';
+  document.getElementById('rec-text').textContent = 'Tekan untuk merekam';
+  document.getElementById('rec-icon').textContent = '🎤';
+
+  renderSetoranList();
+  toast(`✅ Setoran ${SURAHS[surah-1][0]} ${start}–${end} tersimpan`);
+}
+
+/* ============ MURAJA'AH ============ */
+function getDueMurajaah(){
+  const t = today();
+  const due = [];
+  for(const [n, m] of Object.entries(state.murajaah)){
+    if(m.due <= t) due.push(parseInt(n));
+  }
+  return due.sort((a,b)=>a-b);
+}
+
+function renderMurajaah(){
+  const due = getDueMurajaah();
+  const cont = document.getElementById('murajaah-content');
+
+  if(Object.keys(state.murajaah).length === 0){
+    cont.innerHTML = `<div class="empty"><div class="em">🌱</div>
+      <p>Belum ada hafalan untuk dimurajaah.<br>Mulai setoran dulu di tab Setoran.</p></div>`;
+    return;
+  }
+
+  if(due.length === 0){
+    const nextDue = Object.entries(state.murajaah)
+      .map(([n,m])=>({n:parseInt(n), due:m.due}))
+      .sort((a,b)=>a.due.localeCompare(b.due))[0];
+    cont.innerHTML = `<div class="card" style="text-align:center; padding:30px 20px;">
+      <div style="font-size:56px; margin-bottom:12px;">✅</div>
+      <h2 style="color:var(--success); font-size:18px;">Alhamdulillah!</h2>
+      <p style="color:var(--muted); margin-top:6px; font-size:14px;">Murajaah hari ini sudah tuntas.</p>
+      ${nextDue?`<p style="margin-top:16px; font-size:13px; color:var(--muted);">Murajaah berikutnya: <b>${SURAHS[nextDue.n-1][0]}</b> pada ${new Date(nextDue.due).toLocaleDateString('id-ID',{day:'numeric',month:'long'})}</p>`:''}
+      <button class="btn secondary" style="margin-top:14px;" onclick="openMushaf(${nextDue?nextDue.n:1})">📖 Buka Mushaf</button>
+    </div>`;
+    return;
+  }
+
+  const n = due[0];
+  const name = SURAHS[n-1][0];
+  const total = SURAHS[n-1][1];
+  const mem = (state.memorized[n]||[]).length;
+  const m = state.murajaah[n];
+  const q = getQari();
+
+  cont.innerHTML = `
+    <div style="font-size:12px; color:var(--muted); text-align:center; margin-bottom:10px; font-weight:600;">
+      ${due.length} surat menunggu • Sisa ${due.length-1} setelah ini
+    </div>
+    <div class="murajaah-card">
+      <div class="arabic">﷽</div>
+      <div class="surah-name">${name}</div>
+      <div class="surah-meta">Surat ke-${n} • ${mem}/${total} ayat • Qari: ${q.name}</div>
+      <div style="font-size:12px; opacity:0.85;">Interval: ${m.interval} hari • Repetisi: ${m.reps}×</div>
+      <div class="grade-row">
+        <button class="grade-btn" onclick="gradeMurajaah(${n}, 2)">
+          <span class="em">😣</span>Lupa
+        </button>
+        <button class="grade-btn" onclick="gradeMurajaah(${n}, 3)">
+          <span class="em">😅</span>Sulit
+        </button>
+        <button class="grade-btn" onclick="gradeMurajaah(${n}, 5)">
+          <span class="em">😌</span>Lancar
+        </button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <button class="btn secondary" onclick="openMushaf(${n})">📖 Buka Mushaf & Audio</button>
+    </div>
+
+    <div class="card">
+      <h3>💡 Tips Murajaah</h3>
+      <ul style="padding-left:20px; font-size:13px; color:var(--muted); line-height:1.8;">
+        <li>Baca 1 halaman sebelum tidur & setelah subuh</li>
+        <li>Ulangi ayat yang goyah 3-5 kali</li>
+        <li>Dengarkan murottal qari pilihan Anda di tab Mushaf</li>
+        <li>Setorkan ke guru minimal 1× seminggu</li>
+      </ul>
+    </div>
+  `;
+}
+
+function gradeMurajaah(n, q){
+  const m = state.murajaah[n];
+  if(!m) return;
+  let { ease, interval, reps } = m;
+  if(q < 3){
+    reps = 0; interval = 1;
+  } else {
+    reps++;
+    if(reps === 1) interval = 1;
+    else if(reps === 2) interval = 6;
+    else interval = Math.round(interval * ease);
+    ease = ease + (0.1 - (5-q)*(0.08+(5-q)*0.02));
+    if(ease < 1.3) ease = 1.3;
+  }
+  state.murajaah[n] = { ease, interval, reps, due: addDays(today(), interval), lastReview: today() };
+  updateStreak();
+  saveState();
+  renderMurajaah();
+  toast(`✅ ${SURAHS[n-1][0]} dijadwalkan murajaah ${interval} hari lagi`);
+}
+
+/* ============ STATISTIK ============ */
+function renderStatistik(){
+  document.getElementById('s-juz').textContent = estimateJuz();
+  document.getElementById('s-ayat').textContent = totalAyatMemorized();
+  document.getElementById('s-surah').textContent = countDoneSurah();
+  document.getElementById('s-streak').textContent = state.streak.count || 0;
+
+  // Heatmap 12 minggu
+  renderHeatmap();
+
+  // Chart 7 hari
+  const days = [];
+  for(let i=6;i>=0;i--) days.push(addDays(today(), -i));
+  const counts = days.map(d => ayatPadaTanggal(d));
+  const max = Math.max(...counts, 1);
+  document.getElementById('chart').innerHTML = counts.map(c=>
+    `<div class="bar" style="height:${(c/max)*100}%">${c?`<div class="val">${c}</div>`:''}</div>`
+  ).join('');
+  document.getElementById('chart-labels').innerHTML = days.map(d=>{
+    const dt = new Date(d);
+    return `<span>${['Min','Sen','Sel','Rab','Kam','Jum','Sab'][dt.getDay()]}</span>`;
+  }).join('');
+
+  // Surat selesai
+  const done = [];
+  for(let i=1;i<=114;i++) if(surahIsDone(i)) done.push(i);
+  const list = document.getElementById('done-surah-list');
+  if(done.length === 0){
+    list.innerHTML = '<div style="font-size:13px; color:var(--muted);">Belum ada surat yang selesai dihafal.</div>';
+  } else {
+    list.innerHTML = done.map(n=>`
+      <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border);">
+        <span style="font-weight:700; color:var(--primary);">${n}.</span>
+        <span style="flex:1; font-weight:600;">${SURAHS[n-1][0]}</span>
+        <span style="font-size:12px; color:var(--muted);">${SURAHS[n-1][1]} ayat</span>
+        <span>✅</span>
+      </div>
+    `).join('');
+  }
+
+  renderQariSettings();
+  renderReminderSettings();
+  renderPrayerSettings();
+}
+
+function renderHeatmap(){
+  // 12 minggu = 84 hari, minggu dimulai Minggu
+  const cont = document.getElementById('heatmap');
+  const todayDate = new Date();
+  const dayOfWeek = todayDate.getDay(); // 0 = Minggu
+  // Hitung tanggal mulai = 12 minggu lalu, minggu dimulai Minggu
+  const start = new Date(todayDate);
+  start.setDate(start.getDate() - (11 * 7) - dayOfWeek);
+
+  // Cari max ayat untuk skala
+  let maxAyah = 0;
+  const data = [];
+  for(let i=0;i<84;i++){
+    const d = new Date(start);
+    d.setDate(d.getDate() + i);
+    const ds = d.toISOString().slice(0,10);
+    const a = ayatPadaTanggal(ds);
+    if(a > maxAyah) maxAyah = a;
+    data.push({ date: ds, ayat: a });
+  }
+
+  function level(a){
+    if(a === 0) return '';
+    if(maxAyah <= 4){
+      return a >= 5 ? 'l4' : a >= 3 ? 'l3' : a >= 1 ? 'l2' : '';
+    }
+    const r = a / maxAyah;
+    if(r < 0.25) return 'l1';
+    if(r < 0.5) return 'l2';
+    if(r < 0.75) return 'l3';
+    return 'l4';
+  }
+
+  cont.innerHTML = data.map(d=>{
+    const lv = level(d.ayat);
+    const title = `${d.date}: ${d.ayat} ayat`;
+    return `<div class="cell ${lv}" title="${title}"></div>`;
+  }).join('');
+}
+
+/* ============ SHARE RAPOR ============ */
+function openShareModal(){
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>📤 Bagikan Rapor Hafalan</h2>
+    <div class="sub">Rapor akan dibuat sebagai gambar, siap dibagikan ke WhatsApp/Telegram.</div>
+    <div class="form-group">
+      <label>Nama (opsional)</label>
+      <input type="text" id="rapor-name" placeholder="Nama Anda" value="${state.raporName||''}">
+    </div>
+    <div class="form-group">
+      <label>Periode</label>
+      <select id="rapor-period">
+        <option value="all">Semua waktu</option>
+        <option value="7">7 hari terakhir</option>
+        <option value="30">30 hari terakhir</option>
+      </select>
+    </div>
+    <button class="btn" onclick="generateRapor()">🖼️ Buat Gambar Rapor</button>
+    <div id="rapor-preview" style="margin-top:16px;"></div>
+  `;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function generateRapor(){
+  const name = document.getElementById('rapor-name').value.trim();
+  state.raporName = name;
+  saveState();
+  const period = document.getElementById('rapor-period').value;
+  const preview = document.getElementById('rapor-preview');
+
+  // Filter setoran
+  let setoran = state.setoran;
+  if(period !== 'all'){
+    const cutoff = addDays(today(), -parseInt(period) + 1);
+    setoran = setoran.filter(s => s.date >= cutoff);
+  }
+
+  const totalAyat = setoran.reduce((a,s)=>a+(s.end-s.start+1),0);
+  const lancar = setoran.filter(s=>s.quality==='lancar').length;
+  const sulit = setoran.filter(s=>s.quality==='sulit').length;
+  const lupa = setoran.filter(s=>s.quality==='lupa').length;
+  const totalSetoran = setoran.length;
+  const totalAllAyat = totalAyatMemorized();
+  const totalSurahDone = countDoneSurah();
+  const streak = state.streak.count || 0;
+  const juz = estimateJuz();
+
+  // Buat canvas
+  const W = 720, H = 1000;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // Background gradient
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#0d6e4f');
+  bg.addColorStop(1, '#095237');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Ornamen pattern
+  ctx.strokeStyle = 'rgba(212, 167, 44, 0.15)';
+  ctx.lineWidth = 2;
+  for(let i=0;i<8;i++){
+    ctx.beginPath();
+    ctx.arc(60 + i*100, 80, 40, 0, Math.PI*2);
+    ctx.stroke();
+  }
+  for(let i=0;i<6;i++){
+    ctx.beginPath();
+    ctx.arc(W - 60 - i*100, H - 80, 60, 0, Math.PI*2);
+    ctx.stroke();
+  }
+
+  // Card putih
+  const cardX = 40, cardY = 40, cardW = W - 80, cardH = H - 80;
+  ctx.fillStyle = 'white';
+  roundRect(ctx, cardX, cardY, cardW, cardH, 32);
+  ctx.fill();
+
+  // Header
+  ctx.fillStyle = '#0d6e4f';
+  ctx.font = 'bold 28px -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('📖 RAPOR HAFALAN', W/2, cardY + 70);
+
+  ctx.font = '18px -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.fillStyle = '#6b7a72';
+  ctx.fillText('SanadKu • Perjalanan Al-Qur\'an', W/2, cardY + 100);
+
+  // Divider
+  ctx.strokeStyle = '#e2e8e4';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cardX + 40, cardY + 130);
+  ctx.lineTo(cardX + cardW - 40, cardY + 130);
+  ctx.stroke();
+
+  // Nama
+  ctx.fillStyle = '#1a2b22';
+  ctx.font = 'bold 32px -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.fillText(name || 'Hafiz Cilik', W/2, cardY + 190);
+
+  const periodLabel = period === 'all' ? 'Sejak awal' : `${period} hari terakhir`;
+  ctx.font = '16px -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.fillStyle = '#6b7a72';
+  ctx.fillText(periodLabel + ' • ' + new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}), W/2, cardY + 220);
+
+  // Stats grid
+  const gridY = cardY + 270;
+  const stats = [
+    { label:'Ayat Dihafal', val: totalAllAyat, emoji:'📖' },
+    { label:'Surat Selesai', val: totalSurahDone, emoji:'✅' },
+    { label:'Estimasi Juz', val: juz, emoji:'🕌' },
+    { label:'Streak', val: streak + ' hari', emoji:'🔥' }
+  ];
+  const cellW = (cardW - 100) / 2;
+  const cellH = 130;
+  stats.forEach((s, i)=>{
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const x = cardX + 40 + col * (cellW + 20);
+    const y = gridY + row * (cellH + 16);
+    ctx.fillStyle = '#f5f7f5';
+    roundRect(ctx, x, y, cellW, cellH, 18);
+    ctx.fill();
+    ctx.fillStyle = '#1a2b22';
+    ctx.textAlign = 'center';
+    ctx.font = '32px -apple-system, sans-serif';
+    ctx.fillText(s.emoji, x + cellW/2, y + 48);
+    ctx.font = 'bold 32px -apple-system, sans-serif';
+    ctx.fillStyle = '#0d6e4f';
+    ctx.fillText(String(s.val), x + cellW/2, y + 90);
+    ctx.font = '600 13px -apple-system, sans-serif';
+    ctx.fillStyle = '#6b7a72';
+    ctx.fillText(s.label, x + cellW/2, y + 112);
+  });
+
+  // Ringkasan periode
+  const periodY = gridY + 2 * (cellH + 16) + 40;
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 20px -apple-system, sans-serif';
+  ctx.fillStyle = '#1a2b22';
+  ctx.fillText('📊 Ringkasan Periode', cardX + 40, periodY);
+
+  ctx.font = '16px -apple-system, sans-serif';
+  ctx.fillStyle = '#6b7a72';
+  ctx.fillText(`Total setoran: ${totalSetoran} kali`, cardX + 40, periodY + 34);
+  ctx.fillText(`Total ayat disetorkan: ${totalAyat} ayat`, cardX + 40, periodY + 60);
+  ctx.fillText(`😌 Lancar: ${lancar}  •  😅 Sulit: ${sulit}  •  😣 Lupa: ${lupa}`, cardX + 40, periodY + 86);
+
+  // Progress bar keseluruhan
+  const progY = periodY + 130;
+  ctx.font = 'bold 16px -apple-system, sans-serif';
+  ctx.fillStyle = '#1a2b22';
+  ctx.fillText('Progress keseluruhan (dari 6236 ayat)', cardX + 40, progY);
+  const pct = totalAllAyat / 6236;
+  const barW = cardW - 80, barH = 22;
+  ctx.fillStyle = '#e6f2ec';
+  roundRect(ctx, cardX + 40, progY + 14, barW, barH, 11);
+  ctx.fill();
+  const grad = ctx.createLinearGradient(cardX+40, 0, cardX+40+barW, 0);
+  grad.addColorStop(0, '#0d6e4f');
+  grad.addColorStop(1, '#d4a72c');
+  ctx.fillStyle = grad;
+  roundRect(ctx, cardX + 40, progY + 14, Math.max(barW * pct, 20), barH, 11);
+  ctx.fill();
+  ctx.fillStyle = '#0d6e4f';
+  ctx.font = 'bold 14px -apple-system, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText((pct*100).toFixed(2) + '%', cardX + cardW - 40, progY + 30);
+
+  // Quote
+  const qY = progY + 90;
+  ctx.textAlign = 'center';
+  ctx.font = 'italic 17px -apple-system, sans-serif';
+  ctx.fillStyle = '#6b7a72';
+  ctx.fillText('"Sebaik-baik kalian adalah yang mempelajari', W/2, qY);
+  ctx.fillText('Al-Qur\'an dan mengajarkannya." (HR. Bukhari)', W/2, qY + 26);
+
+  // Footer
+  const fY = cardY + cardH - 60;
+  ctx.strokeStyle = '#e2e8e4';
+  ctx.beginPath();
+  ctx.moveTo(cardX + 40, fY - 20);
+  ctx.lineTo(cardX + cardW - 40, fY - 20);
+  ctx.stroke();
+  ctx.font = '14px -apple-system, sans-serif';
+  ctx.fillStyle = '#6b7a72';
+  ctx.textAlign = 'center';
+  ctx.fillText('Dibuat dengan 📖 SanadKu • ' + new Date().toLocaleDateString('id-ID'), W/2, fY + 4);
+
+  // Konversi ke blob
+  canvas.toBlob(blob=>{
+    const url = URL.createObjectURL(blob);
+    preview.innerHTML = `
+      <div style="text-align:center;">
+        <img src="${url}" style="width:100%; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,0.1);">
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <button class="btn" onclick="downloadRapor()">💾 Unduh</button>
+          <button class="btn secondary" onclick="shareRaporImage()">📤 Bagikan</button>
+        </div>
+      </div>
+    `;
+    window._raporBlob = blob;
+    window._raporUrl = url;
+  }, 'image/png');
+}
+
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function downloadRapor(){
+  if(!window._raporUrl) return;
+  const a = document.createElement('a');
+  a.href = window._raporUrl;
+  a.download = `sanadku-rapor-${today()}.png`;
+  a.click();
+  toast('💾 Rapor diunduh');
+}
+
+async function shareRaporImage(){
+  if(!window._raporBlob){ toast('Buat rapor dulu'); return; }
+  const file = new File([window._raporBlob], `sanadku-rapor-${today()}.png`, { type:'image/png' });
+  if(navigator.canShare && navigator.canShare({ files:[file] })){
+    try {
+      await navigator.share({ files:[file], title:'Rapor Hafalan TahfidzKu', text:'Rapor hafalan saya 📖' });
+    } catch(e){ /* dibatalkan */ }
+  } else {
+    downloadRapor();
+    toast('Browser tidak mendukung share. Silakan unduh lalu kirim manual.');
+  }
+}
+
+/* ============ FITUR HALAQAH & BACKUP LENGKAP ============ */
+function openHalaqahSettings(){
+  const p=state.profile||{};
+  document.getElementById('modal').innerHTML=`
+    <button class="modal-close" onclick="closeModal()">✕</button><h2>👥 Profil Halaqah</h2>
+    <div class="sub">Profil lokal tetap aktif. Sinkronisasi lintas HP tersedia setelah Firebase dikonfigurasi dan akun masuk.</div>
+    <div class="form-group"><label>Nama</label><input id="hp-name" maxlength="80" value="${escapeAttr(p.name||'')}" placeholder="Nama guru/santri"></div>
+    <div class="form-group"><label>Peran</label><select id="hp-role"><option value="santri" ${p.role==='santri'?'selected':''}>Santri</option><option value="guru" ${p.role==='guru'?'selected':''}>Guru / Pembina</option></select></div>
+    <div class="form-group"><label>Nama Halaqah / Kelompok</label><input id="hp-halaqah" maxlength="100" value="${escapeAttr(p.halaqah||'')}" placeholder="Contoh: Halaqah Subuh"></div>
+    <div class="form-group"><label>Nama Guru (jika santri)</label><input id="hp-teacher" maxlength="80" value="${escapeAttr(p.teacher||'')}" placeholder="Nama pembina"></div>
+    <div class="form-group"><label>Target hafalan per hari (ayat)</label><input id="hp-target" type="number" min="1" max="100" value="${Math.max(1,Math.min(100,Number(state.plan?.dailyAyah||state.target.dailyAyah||5)))}"></div>
+    <button class="btn" onclick="saveHalaqahSettings()">Simpan Profil & Target</button>
+    <p style="font-size:11px;color:var(--muted);margin-top:10px">Catatan: sinkronisasi antargawai dan akun banyak pengguna memerlukan backend/server. Versi ini belum mengirim data ke server.</p>`;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+function escapeAttr(v){return String(v??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function saveHalaqahSettings(){
+  const name=document.getElementById('hp-name').value.trim();
+  const role=document.getElementById('hp-role').value;
+  const halaqah=document.getElementById('hp-halaqah').value.trim();
+  const teacher=document.getElementById('hp-teacher').value.trim();
+  const target=Math.max(1,Math.min(100,parseInt(document.getElementById('hp-target').value,10)||5));
+  state.profile={name,role,halaqah,teacher}; state.plan=Object.assign({},state.plan,{dailyAyah:target});
+  state.target.dailyAyah=target; saveState(); closeModal(); updateHalaqahUI(); renderHome(); toast('Profil halaqah disimpan');
+}
+function getSuggestedNewMemorization(){
+  for(let n=1;n<=114;n++){
+    const mem=new Set(state.memorized[n]||[]); let start=0;
+    for(let a=1;a<=SURAHS[n-1][1];a++){if(!mem.has(a)){start=a;break;}}
+    if(start){let end=start;const limit=Math.max(1,Math.min(100,Number(state.plan?.dailyAyah||state.target.dailyAyah||5)));while(end+1<=SURAHS[n-1][1]&&end-start+1<limit&&!mem.has(end+1))end++;return {surah:n,start,end,name:SURAHS[n-1][0]};}
+  }
+  return null;
+}
+function useSuggestedSetoran(){
+  const next=getSuggestedNewMemorization(); if(!next){toast('MasyaAllah, semua ayat sudah ditandai hafal');return;}
+  showView('setoran');
+  const sel=document.getElementById('setoran-surah'); if(sel){sel.value=String(next.surah);updateAyahInputs();}
+  const st=document.getElementById('setoran-start'), en=document.getElementById('setoran-end'); if(st)st.value=next.start;if(en)en.value=next.end;
+  toast(`Saran: ${next.name} ayat ${next.start}–${next.end}`);
+}
+function updatePersonalGreeting(){
+  const p=state.profile||{};
+  const salam=document.getElementById('home-salam');
+  const greeting=document.getElementById('home-greeting');
+  const name=(p.name||'').trim();
+  if(salam) salam.textContent=name ? `Assalamu'alaikum, ${name} 👋` : `Assalamu'alaikum 👋`;
+  const h=new Date().getHours();
+  let greet='Semangat menghafal!';
+  if(h<11) greet='Selamat pagi, semangat!';
+  else if(h<15) greet='Selamat siang!';
+  else if(h<18) greet='Selamat sore!';
+  else greet='Selamat malam!';
+  if(greeting) greeting.textContent=greet;
+}
+function updateHalaqahUI(){
+  updatePersonalGreeting();
+  const p=state.profile||{}; const role=p.role==='guru'?'Guru/Pembina':'Santri';
+  const summary=document.getElementById('halaqah-profile-summary');
+  if(summary) summary.textContent=`${p.name||'Profil belum diatur'} • ${role}${p.halaqah?' • '+p.halaqah:''}${p.teacher&&p.role!=='guru'?' • Guru: '+p.teacher:''}`;
+  const plan=document.getElementById('daily-plan-summary');
+  if(plan){
+    const due=getDueMurajaah(); const target=Number(state.plan?.dailyAyah||state.target.dailyAyah||5); const done=ayatHariIni();
+    const dueAyahs=Object.entries(state.ayahReview||{}).filter(([k,v])=>v.nextDue<=today()).length;
+    const next=getSuggestedNewMemorization();
+    plan.innerHTML=`<b>Target hafalan:</b> ${done}/${target} ayat hari ini<br><b>Murajaah surat:</b> ${due.length} surat menunggu<br><b>Evaluasi ayat:</b> ${dueAyahs} ayat perlu diulang<br><b>Setoran disarankan:</b> ${next?`${escapeHTML(next.name)} ayat ${next.start}–${next.end}`:'Target hafalan tercapai'}${p.halaqah?`<br><b>Kelompok:</b> ${escapeHTML(p.halaqah)}`:''}<br><span style="font-size:11px">Urutan yang disarankan: murajaah tertunda → setoran baru → evaluasi ayat sulit.</span>`;
+  }
+}
+function escapeHTML(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function gradeAyahReview(surah, ayah, grade){
+  const key=`${surah}:${ayah}`; const old=state.ayahReview[key]||{}; let days=1;
+  if(grade==='lancar') days=Math.min(30,Math.max(2,(old.interval||1)*2));
+  else if(grade==='sulit') days=1;
+  else days=0;
+  state.ayahReview[key]={grade, lastReview:today(), interval:days, nextDue:addDays(today(),Math.max(1,days)), count:(old.count||0)+1};
+  if(grade==='lupa'){
+    state.memorized[surah]=(state.memorized[surah]||[]).filter(a=>a!==ayah);
+  }
+  saveState();
+  const cell=document.getElementById(`ayah-${surah}-${ayah}`);
+  if(cell){const label=cell.querySelector('div[style*="font-size:11px"]');if(label)label.innerHTML=`Evaluasi: <b>${({lancar:'Lancar',sulit:'Perlu diulang',lupa:'Belum lancar'})[grade]}</b>`;}
+  renderHafalan(); updateHalaqahUI(); toast(`Evaluasi ayat ${ayah}: ${{lancar:'lancar',sulit:'perlu diulang',lupa:'belum lancar'}[grade]}`);
+}
+function showHalaqahReport(){
+  const p=state.profile||{}; const due=getDueMurajaah(); const ayat=totalAyatMemorized();
+  const reviews=Object.values(state.ayahReview||{}); const lancar=reviews.filter(x=>x.grade==='lancar').length; const sulit=reviews.filter(x=>x.grade==='sulit'||x.grade==='lupa').length;
+  document.getElementById('modal').innerHTML=`<button class="modal-close" onclick="closeModal()">✕</button><h2>📋 Rapor Halaqah</h2><div class="sub">${escapeHTML(p.name||'Santri')} • ${escapeHTML(p.halaqah||'Kelompok belum diatur')}</div>
+  <div class="stat-grid"><div class="stat"><div class="num">${ayat}</div><div class="lbl">Ayat ditandai hafal</div></div><div class="stat"><div class="num">${countDoneSurah()}</div><div class="lbl">Surat selesai</div></div><div class="stat"><div class="num">${due.length}</div><div class="lbl">Surat murajaah</div></div><div class="stat"><div class="num">${lancar}</div><div class="lbl">Evaluasi lancar</div></div></div>
+  <p style="font-size:13px;margin:12px 0">Ayat yang perlu perhatian: <b>${sulit}</b>. Rapor ini merupakan ringkasan lokal dan belum menjadi penilaian guru yang tersinkronisasi.</p><button class="btn" onclick="exportData()">Unduh data JSON</button>`;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+function blobToBase64(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]||'');r.onerror=reject;r.readAsDataURL(blob);});}
+function base64ToBlob(b64,type='audio/webm'){const raw=atob(b64);const bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return new Blob([bytes],{type});}
+async function exportFullBackup(){
+  try{
+    const audios=[];
+    if(db){for(const rec of (state.setoran||[]).filter(x=>x.hasAudio)){try{const b=await getAudio(rec.id);if(b)audios.push({id:rec.id,type:b.type||'audio/webm',data:await blobToBase64(b)});}catch(e){console.warn('Audio tidak terbaca',rec.id,e);}}}
+    const backup={app:'SanadKu',backupVersion:2,createdAt:new Date().toISOString(),state,audios};
+    const blob=new Blob([JSON.stringify(backup)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a');a.href=url;a.download=`sanadku-backup-lengkap-${today()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast(`Backup selesai • ${audios.length} rekaman audio`);
+  }catch(e){console.error(e);toast('Backup gagal. Coba lagi dan pastikan penyimpanan tersedia.');}
+}
+async function importFullBackup(event){
+  const file=event.target.files?.[0]; if(!file)return;
+  try{
+    const parsed=JSON.parse(await file.text());
+    const incoming=parsed?.state || (parsed?.memorized && parsed?.setoran ? parsed : null);
+    if(!incoming || typeof incoming!=='object' || !incoming.memorized || !Array.isArray(incoming.setoran)) throw new Error('Format backup tidak dikenali');
+    const choice=confirm('Pulihkan backup dengan cara GABUNG data? OK = gabungkan; Batal = pilih penggantian penuh pada konfirmasi berikutnya.');
+    let next;
+    if(choice){
+      next=JSON.parse(JSON.stringify(state));
+      for(const [surah,ays] of Object.entries(incoming.memorized||{})) next.memorized[surah]=Array.from(new Set([...(next.memorized[surah]||[]),...(ays||[])])).sort((a,b)=>a-b);
+      const ids=new Set((next.setoran||[]).map(x=>x.id)); next.setoran=[...(next.setoran||[]),...(incoming.setoran||[]).filter(x=>!ids.has(x.id))].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      next.murajaah=Object.assign({},incoming.murajaah||{},next.murajaah||{});
+      next.ayahReview=Object.assign({},incoming.ayahReview||{},next.ayahReview||{});
+      next.profile=Object.assign({},incoming.profile||{},next.profile||{});
+      next.plan=Object.assign({},incoming.plan||{},next.plan||{});
+      next.streak= (incoming.streak?.count||0)>(next.streak?.count||0)?incoming.streak:next.streak;
+    }else{
+      if(!confirm('PERINGATAN: ganti data hafalan, setoran, target, dan profil saat ini dengan backup? Buat backup saat ini terlebih dahulu.')){event.target.value='';return;}
+      const defaults={memorized:{},murajaah:{},setoran:[],streak:{last:null,count:0},target:{dailyAyah:5},reminder:{enabled:false,time:"19:00"},qari:"ar.alafasy",notifPermissionAsked:false,profile:{name:"",role:"santri",halaqah:"",teacher:""},ayahReview:{},plan:{dailyAyah:5,reviewFirst:true},prayer:{lat:null,lng:null,city:"",timings:null,date:null,enabled:false,autoReminder:false}};
+      next=Object.assign({},defaults,incoming);
+    }
+    // Replace state atomically in memory, normalize legacy backups without re-reading old localStorage.
+    state=Object.assign({},state,next);
+    state.memorized=state.memorized||{}; state.murajaah=state.murajaah||{}; state.setoran=state.setoran||[];
+    state.streak=state.streak||{last:null,count:0}; state.target=Object.assign({dailyAyah:5},state.target||{});
+    state.reminder=Object.assign({enabled:false,time:"19:00"},state.reminder||{}); state.profile=Object.assign({name:"",role:"santri",halaqah:"",teacher:""},state.profile||{});
+    state.ayahReview=state.ayahReview||{}; state.plan=Object.assign({dailyAyah:state.target.dailyAyah||5,reviewFirst:true},state.plan||{});
+    state.prayer=Object.assign({lat:null,lng:null,city:"",timings:null,date:null,enabled:false,autoReminder:false},state.prayer||{});
+    saveState();
+    if(parsed.audios?.length && db){
+      for(const a of parsed.audios){if(a?.id&&a?.data){try{await saveAudio(a.id,base64ToBlob(a.data,a.type));}catch(e){console.warn('Audio gagal dipulihkan',a.id,e);}}}
+    }
+    event.target.value=''; renderHome();renderHafalan();renderSetoranList();renderMurajaah();renderStatistik();updateHalaqahUI();toast('Pemulihan selesai. Periksa kembali data dan rekaman.');
+  }catch(e){console.error(e);alert('Backup gagal dipulihkan: '+(e.message||'format tidak valid'));event.target.value='';}
+}
+
+/* ============ FIREBASE AUTH + CLOUD SYNC ============ */
+/* Gunakan Firebase Web App config dari Firebase Console. Jangan pernah menaruh service-account key di HTML. */
+let fbApp=null, fbAuth=null, fbDb=null, fbModules=null, fbUser=null, fbSyncTimer=null, firebaseSyncInProgress=false;
+const FB_CONFIG_KEY='sanadku_firebase_config_v1';
+function readFirebaseConfig(){try{return JSON.parse(localStorage.getItem(FB_CONFIG_KEY)||'{}')}catch(e){return {}}}
+const TAHFIDZKU_FIREBASE_DEFAULT={apiKey:'AIzaSyACEk-vm4zmtlI7scMUmnnC5U8dJCR3BfM',authDomain:'sanadku-halaqoh.firebaseapp.com',projectId:'sanadku-halaqoh',storageBucket:'sanadku-halaqoh.firebasestorage.app',messagingSenderId:'682780590025',appId:'1:682780590025:web:4097396ab5cf24cf627218',measurementId:'G-QEDF5Z83RD'};
+function getFirebaseConfigForForm(){return Object.assign({},TAHFIDZKU_FIREBASE_DEFAULT,readFirebaseConfig())}
+function firebaseConfigured(c){return !!(c&&c.apiKey&&c.authDomain&&c.projectId&&c.appId)}
+function firebaseStatus(msg,good=false){
+  const el=document.getElementById('firebase-status');
+  if(el){el.textContent=msg;el.style.background=good?'#e6f2ec':'#fff4df';el.style.color=good?'#087653':'#855a00';}
+}
+function openFirebaseSettings(){
+  const c=getFirebaseConfigForForm();
+  document.getElementById('modal').innerHTML=`
+    <button class="modal-close" onclick="closeModal()">✕</button><h2>☁️ Firebase TahfidzKu</h2>
+    <p style="font-size:12px;color:var(--muted);margin:8px 0 12px">Masukkan konfigurasi Web App dari Firebase Console → Project settings → Your apps. API key web Firebase bukan service-account key. Jangan pernah memasukkan private key/service account.</p>
+    <div class="form-group"><label>API Key</label><input id="fb-apiKey" autocomplete="off" value="${escapeAttr(c.apiKey||'')}" placeholder="AIza..."></div>
+    <div class="form-group"><label>Auth Domain</label><input id="fb-authDomain" value="${escapeAttr(c.authDomain||'')}" placeholder="proyek.firebaseapp.com"></div>
+    <div class="form-group"><label>Project ID</label><input id="fb-projectId" value="${escapeAttr(c.projectId||'')}" placeholder="nama-proyek"></div>
+    <div class="form-group"><label>App ID</label><input id="fb-appId" value="${escapeAttr(c.appId||'')}" placeholder="1:...:web:..."></div>
+    <div class="form-group"><label>Messaging Sender ID (opsional)</label><input id="fb-messagingSenderId" value="${escapeAttr(c.messagingSenderId||'')}" placeholder="..."></div>
+    <div class="form-group"><label>Storage Bucket (opsional)</label><input id="fb-storageBucket" value="${escapeAttr(c.storageBucket||'')}" placeholder="proyek.firebasestorage.app"></div>
+    <button class="btn" onclick="saveFirebaseConfig()">Simpan Konfigurasi</button>
+    <hr style="margin:16px 0;border:0;border-top:1px solid var(--border)">
+    <div class="form-group"><label>Email</label><input id="fb-email" type="email" autocomplete="username" placeholder="nama@email.com"></div>
+    <div class="form-group"><label>Kata sandi (minimal 6 karakter)</label><input id="fb-password" type="password" autocomplete="current-password" placeholder="Kata sandi"></div>
+    <div class="btn-row"><button class="btn" onclick="firebaseSignIn(false)">Masuk</button><button class="btn secondary" onclick="firebaseSignIn(true)">Daftar</button></div>
+    <div style="height:8px"></div><button class="btn ghost" onclick="firebaseSignOut()">Keluar dari akun</button>
+    <hr style="margin:16px 0;border:0;border-top:1px solid var(--border)">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Santri: masukkan kode undangan dari guru. Guru: pembuatan kode hanya aktif jika akun diberi hak guru oleh administrator Firebase.</p>
+    <div class="form-group"><label>Kode halaqah</label><input id="fb-invite-code" maxlength="32" placeholder="Kode dari guru"></div>
+    <div class="btn-row"><button class="btn secondary" onclick="firebaseJoinHalaqah()">Gabung Halaqah</button><button class="btn secondary" onclick="firebaseCreateInvite()">Buat Kode Guru</button></div>`;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+function saveFirebaseConfig(){
+  const c={
+    apiKey:document.getElementById('fb-apiKey').value.trim(),
+    authDomain:document.getElementById('fb-authDomain').value.trim(),
+    projectId:document.getElementById('fb-projectId').value.trim(),
+    appId:document.getElementById('fb-appId').value.trim(),
+    messagingSenderId:document.getElementById('fb-messagingSenderId').value.trim(),
+    storageBucket:document.getElementById('fb-storageBucket').value.trim()
+  };
+  if(!firebaseConfigured(c)){alert('Isi API Key, Auth Domain, Project ID, dan App ID terlebih dahulu.');return;}
+  localStorage.setItem(FB_CONFIG_KEY,JSON.stringify(c));
+  initializeFirebase().then(()=>{firebaseStatus('Konfigurasi tersimpan. Silakan masuk atau daftar akun.',true);toast('Konfigurasi Firebase tersimpan');}).catch(e=>{firebaseStatus('Konfigurasi tersimpan, tetapi Firebase gagal dimulai: '+friendlyFirebaseError(e));});
+}
+async function initializeFirebase(){
+  const c=readFirebaseConfig(); if(!firebaseConfigured(c))throw new Error('Firebase config belum lengkap');
+  if(fbApp && fbDb && fbAuth)return;
+  const ver='12.19.0';
+  const [appMod,authMod,storeMod]=await Promise.all([
+    import(`https://www.gstatic.com/firebasejs/${ver}/firebase-app.js`),
+    import(`https://www.gstatic.com/firebasejs/${ver}/firebase-auth.js`),
+    import(`https://www.gstatic.com/firebasejs/${ver}/firebase-firestore.js`)
+  ]);
+  fbModules={...appMod,...authMod,...storeMod};
+  fbApp=appMod.initializeApp(c,'sanadku-'+c.projectId);
+  fbAuth=authMod.getAuth(fbApp); fbDb=storeMod.getFirestore(fbApp);
+  authMod.onAuthStateChanged(fbAuth,async user=>{
+    fbUser=user||null;
+    if(user){
+      firebaseStatus('Masuk sebagai '+(user.email||user.uid)+'. Memeriksa data cloud…',true);
+      try{await firebaseBootstrapProfile(user);await firebaseSyncNow(true);}catch(e){firebaseStatus('Akun masuk, sinkronisasi belum berhasil: '+friendlyFirebaseError(e));}
+    }else firebaseStatus('Firebase siap. Belum ada akun yang masuk.');
+  });
+}
+function friendlyFirebaseError(e){
+  const c=e?.code||'';
+  const map={
+    'auth/invalid-credential':'Email atau kata sandi salah.',
+    'auth/email-already-in-use':'Email sudah terdaftar; silakan masuk.',
+    'auth/weak-password':'Kata sandi terlalu lemah.',
+    'auth/invalid-email':'Format email tidak valid.',
+    'auth/operation-not-allowed':'Aktifkan Email/Password di Firebase Authentication.',
+    'permission-denied':'Akses ditolak oleh Firestore Security Rules. Periksa aturan dan hak akses.',
+    'unavailable':'Layanan internet atau Firebase sedang tidak tersedia.'
+  };
+  return map[c]||e?.message||'Terjadi kesalahan Firebase.';
+}
+async function firebaseSignIn(create){
+  try{
+    await initializeFirebase();
+    const email=document.getElementById('fb-email')?.value.trim();
+    const password=document.getElementById('fb-password')?.value||'';
+    if(!email||password.length<6){alert('Masukkan email dan kata sandi minimal 6 karakter.');return;}
+    if(create)await fbModules.createUserWithEmailAndPassword(fbAuth,email,password);
+    else await fbModules.signInWithEmailAndPassword(fbAuth,email,password);
+    toast(create?'Akun berhasil dibuat':'Berhasil masuk');
+    closeModal();
+  }catch(e){alert('Firebase: '+friendlyFirebaseError(e));}
+}
+async function firebaseSignOut(){
+  try{if(!fbAuth){alert('Firebase belum diinisialisasi.');return;}await fbModules.signOut(fbAuth);fbUser=null;firebaseStatus('Keluar dari akun. Data lokal tetap aman.');document.getElementById('firebase-roster').innerHTML='';closeModal();toast('Berhasil keluar');}
+  catch(e){alert(friendlyFirebaseError(e));}
+}
+function cloudProfilePayload(uid, email, roleOverride){
+  const p=state.profile||{};
+  return {uid,email:email||'',name:p.name||'',role:roleOverride||p.role||'santri',halaqah:p.halaqah||'',teacher:p.teacher||'',teacherUid:p.teacherUid||null,inviteCode:p.inviteCode||null,updatedAt:Date.now(),state:JSON.parse(JSON.stringify(state))};
+}
+async function firebaseBootstrapProfile(user){
+  const M=fbModules, ref=M.doc(fbDb,'sanadkuUsers',user.uid), snap=await M.getDoc(ref);
+  if(!snap.exists()){
+    await M.setDoc(ref,cloudProfilePayload(user.uid,user.email));
+    firebaseStatus('Akun aktif. Data lokal lama disalin ke cloud; data di perangkat tetap dipertahankan.',true);
+  }else{
+    const remote=snap.data();
+    // Pull only when local data looks empty; otherwise merge so existing local hafalan is not silently lost.
+    if(totalAyatMemorized()===0 && (remote.state?.memorized && Object.keys(remote.state.memorized).length)){
+      if(confirm('Akun ini sudah memiliki data cloud. Muat data cloud ke perangkat ini? Pilih Batal untuk menggabungkan data lokal dengan cloud.')){
+        applyCloudState(remote.state);
+      }else{
+        state=mergeSanadStates(state,remote.state);saveState();
+      }
+    }else if(remote.state){
+      state=mergeSanadStates(state,remote.state);saveState();
+    }
+    state.profile=Object.assign({},state.profile||{},{
+      name:remote.name||state.profile?.name||'', role:remote.role||state.profile?.role||'santri',
+      halaqah:remote.halaqah||state.profile?.halaqah||'',teacher:remote.teacher||state.profile?.teacher||'',
+      teacherUid:remote.teacherUid||state.profile?.teacherUid||null,inviteCode:remote.inviteCode||state.profile?.inviteCode||null
+    });
+    saveState();updateHalaqahUI();
+  }
+}
+function mergeSanadStates(local,remote){
+  const out=JSON.parse(JSON.stringify(local||{})); remote=remote||{};
+  out.memorized=out.memorized||{};
+  for(const [n,arr] of Object.entries(remote.memorized||{}))out.memorized[n]=Array.from(new Set([...(out.memorized[n]||[]),...(arr||[])])).sort((a,b)=>a-b);
+  const ids=new Set((out.setoran||[]).map(x=>x.id));
+  out.setoran=[...(out.setoran||[]),...(remote.setoran||[]).filter(x=>!ids.has(x.id))].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  out.murajaah=Object.assign({},remote.murajaah||{},out.murajaah||{});
+  out.ayahReview=Object.assign({},remote.ayahReview||{},out.ayahReview||{});
+  out.streak=(remote.streak?.count||0)>(out.streak?.count||0)?remote.streak:(out.streak||remote.streak);
+  out.target=Object.assign({},remote.target||{},out.target||{});
+  out.plan=Object.assign({},remote.plan||{},out.plan||{});
+  out.profile=Object.assign({},remote.profile||{},out.profile||{});
+  return out;
+}
+function applyCloudState(remote){
+  if(!remote)return;
+  state=Object.assign({},state,remote);
+  state.memorized=state.memorized||{};state.setoran=state.setoran||[];state.murajaah=state.murajaah||{};state.ayahReview=state.ayahReview||{};
+  saveState();renderHome();renderHafalan();renderSetoranList();renderMurajaah();renderStatistik();updateHalaqahUI();
+}
+function scheduleFirebaseSync(){
+  if(!fbUser||!fbDb||!fbModules)return;
+  if(fbSyncTimer)clearTimeout(fbSyncTimer);
+  fbSyncTimer=setTimeout(()=>firebaseSyncNow(true).catch(e=>firebaseStatus('Sinkronisasi otomatis gagal: '+friendlyFirebaseError(e))),1800);
+}
+async function firebaseSyncNow(silent=false){
+  if(!fbUser||!fbDb||!fbModules){
+    if(!silent)alert('Atur konfigurasi Firebase dan masuk akun terlebih dahulu.');
+    return;
+  }
+  try{
+    const M=fbModules, ref=M.doc(fbDb,'sanadkuUsers',fbUser.uid), snap=await M.getDoc(ref);
+    const old=snap.exists()?snap.data():{};
+    const merged=old.state?mergeSanadStates(state,old.state):state;
+    const profile=state.profile||{};
+    // Never use a profile's local role to grant cloud permissions. Teacher privileges are enforced by Firestore custom claims.
+    const payload={uid:fbUser.uid,email:fbUser.email||'',name:profile.name||old.name||'',role:profile.role||old.role||'santri',halaqah:profile.halaqah||old.halaqah||'',teacher:profile.teacher||old.teacher||'',teacherUid:profile.teacherUid||old.teacherUid||null,inviteCode:profile.inviteCode||old.inviteCode||null,updatedAt:Date.now(),state:merged};
+    await M.setDoc(ref,payload,{merge:true});
+    state=mergeSanadStates(state,old.state||{});firebaseSyncInProgress=true;saveState();firebaseSyncInProgress=false;
+    if(!silent)toast('Sinkronisasi cloud berhasil');
+    firebaseStatus('Tersinkron • '+(fbUser.email||fbUser.uid)+' • '+new Date().toLocaleTimeString('id-ID'),true);
+    updateHalaqahUI();
+  }catch(e){firebaseStatus('Sinkronisasi gagal: '+friendlyFirebaseError(e));if(!silent)alert(friendlyFirebaseError(e));throw e;}
+}
+async function firebaseCreateInvite(){
+  try{
+    if(!fbUser||!fbDb)throw new Error('Masuk ke akun Firebase terlebih dahulu.');
+    const claims=await fbUser.getIdTokenResult(true);
+    if(claims.claims.guru!==true)throw new Error('Akun ini belum memiliki hak guru. Administrator harus memberi custom claim guru=true melalui Firebase Admin SDK.');
+    const code=Math.random().toString(36).slice(2,8).toUpperCase();
+    await fbModules.setDoc(fbModules.doc(fbDb,'sanadkuInviteCodes',code),{teacherUid:fbUser.uid,teacherName:state.profile?.name||fbUser.email,createdAt:Date.now()});
+    const field=document.getElementById('fb-invite-code');if(field)field.value=code;
+    alert('Kode halaqah: '+code+'\\nBagikan hanya kepada santri yang akan bergabung.');
+  }catch(e){alert('Tidak dapat membuat kode: '+friendlyFirebaseError(e));}
+}
+async function firebaseJoinHalaqah(){
+  try{
+    if(!fbUser||!fbDb)throw new Error('Masuk ke akun Firebase terlebih dahulu.');
+    const code=(document.getElementById('fb-invite-code')?.value||'').trim().toUpperCase();
+    if(!code)throw new Error('Masukkan kode dari guru.');
+    const ref=fbModules.doc(fbDb,'sanadkuInviteCodes',code),snap=await fbModules.getDoc(ref);
+    if(!snap.exists())throw new Error('Kode tidak ditemukan.');
+    const invite=snap.data();
+    if(invite.teacherUid===fbUser.uid)throw new Error('Guru tidak dapat bergabung ke kode miliknya sendiri sebagai santri.');
+    state.profile=Object.assign({},state.profile||{},{role:'santri',teacherUid:invite.teacherUid,inviteCode:code,teacher:invite.teacherName||state.profile?.teacher||''});
+    saveState();await firebaseSyncNow(true);updateHalaqahUI();alert('Berhasil bergabung ke halaqah guru. Data akan tersinkron setelah aturan Firestore dipasang dengan benar.');closeModal();
+  }catch(e){alert('Gagal bergabung: '+friendlyFirebaseError(e));}
+}
+async function firebaseLoadRoster(){
+  const out=document.getElementById('firebase-roster');
+  if(!fbUser||!fbDb||!fbModules){if(out)out.textContent='Masuk ke akun Firebase terlebih dahulu.';return;}
+  try{
+    const claims=await fbUser.getIdTokenResult(true);
+    if(claims.claims.guru!==true){if(out)out.textContent='Daftar santri hanya untuk akun yang diberi hak guru oleh administrator Firebase.';return;}
+    const M=fbModules,q=M.query(M.collection(fbDb,'sanadkuUsers'),M.where('teacherUid','==',fbUser.uid)),snap=await M.getDocs(q);
+    if(!out)return;
+    if(snap.empty){out.textContent='Belum ada santri yang bergabung.';return;}
+    out.innerHTML=snap.docs.map(d=>{
+      const x=d.data(),st=x.state||{},mem=st.memorized||{},count=Object.values(mem).reduce((a,b)=>a+b.length,0);
+      const reviews=Object.values(st.ayahReview||{}),due=reviews.filter(r=>r.nextDue&&r.nextDue<=today()).length;
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--border)"><b>${escapeHTML(x.name||x.email||d.id)}</b><br><span style="color:var(--muted)">Hafalan: ${count} ayat • Evaluasi jatuh tempo: ${due} • Halaqah: ${escapeHTML(x.halaqah||'—')}</span></div>`;
+    }).join('');
+  }catch(e){if(out)out.textContent='Gagal memuat daftar santri: '+friendlyFirebaseError(e);}
+}
+/* ============ EKSPOR / RESET ============ */
+function exportData(){
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sanadku-backup-${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('💾 Data diekspor');
+}
+
+function resetData(){
+  if(!confirm('Yakin ingin menghapus SEMUA data? Tindakan ini tidak dapat dibatalkan.')) return;
+  if(!confirm('Konfirmasi sekali lagi: hapus semua hafalan, setoran, dan riwayat?')) return;
+  state = {
+    memorized:{}, murajaah:{}, setoran:[],
+    streak:{last:null, count:0},
+    target:{ dailyAyah: 5 },
+    reminder:{ enabled:false, time:"19:00" },
+    qari:"ar.alafasy",
+    notifPermissionAsked:false,
+    profile:{name:"",role:"santri",halaqah:"",teacher:""},
+    ayahReview:{},
+    plan:{dailyAyah:5,reviewFirst:true},
+    prayer:{ lat:null, lng:null, city:"", timings:null, date:null, enabled:false, autoReminder:false }
+  };
+  saveState();
+  indexedDB.deleteDatabase('sanadku');
+  toast('🗑️ Data direset');
+  showView('home');
+}
+
+/* ============ MODAL ============ */
+function closeModal(){
+  if(currentAudio){ currentAudio.pause(); currentAudio = null; }
+  if(currentPlayingCell){
+    currentPlayingCell.classList.remove('playing');
+    currentPlayingCell = null;
+  }
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+/* ============ INIT ============ */
+async function init(){
+  loadState();
+  try { await openDB(); } catch(e){ console.warn('IndexedDB tidak tersedia', e); }
+
+  updatePersonalGreeting();
+
+  renderHome();
+  updateHalaqahUI();
+
+  // Refresh waktu shalat kalau beda hari
+  if(state.prayer.lat != null && state.prayer.date !== today()){
+    fetchPrayerTimes().then(()=>renderHome());
+  }
+
+  scheduleReminder();
+  const fbCfg=readFirebaseConfig();
+  if(firebaseConfigured(fbCfg)) initializeFirebase().catch(e=>firebaseStatus('Firebase gagal dimulai: '+friendlyFirebaseError(e)));
+}
+
+init();
+</script>
+</body>
+</html>
